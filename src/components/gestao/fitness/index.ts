@@ -1,0 +1,14 @@
+export { FitnessDashboardPage } from './FitnessDashboardPage';
+export { FitnessPlansPage } from './FitnessPlansPage';
+export { ClientsPage as MembersPage } from './ClientsPage';
+export { ClientProfilePage } from './ClientProfilePage';
+export { ClassTypesPage } from './ClassTypesPage';
+export { ClassSchedulesPage } from './ClassSchedulesPage';
+export { ClassRoomsPage } from './ClassRoomsPage';
+export { AccessControlPage } from './AccessControlPage';
+export { FitnessSettingsPage } from './FitnessSettingsPage';
+export { CouponsPage } from './CouponsPage';
+export { FinancialCategoriesPage } from './FinancialCategoriesPage';
+export { SuppliersPage } from './SuppliersPage';
+export { AccessProfilesPage } from './AccessProfilesPage';
+export { AgendaPage } from './AgendaPage';

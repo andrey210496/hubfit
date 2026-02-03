@@ -1,0 +1,12 @@
+-- Add new action types to the automation_action_type enum
+ALTER TYPE automation_action_type ADD VALUE IF NOT EXISTS 'http_request';
+ALTER TYPE automation_action_type ADD VALUE IF NOT EXISTS 'send_email';
+ALTER TYPE automation_action_type ADD VALUE IF NOT EXISTS 'send_sms';
+ALTER TYPE automation_action_type ADD VALUE IF NOT EXISTS 'run_javascript';
+ALTER TYPE automation_action_type ADD VALUE IF NOT EXISTS 'update_contact';
+ALTER TYPE automation_action_type ADD VALUE IF NOT EXISTS 'split';
+ALTER TYPE automation_action_type ADD VALUE IF NOT EXISTS 'loop';
+ALTER TYPE automation_action_type ADD VALUE IF NOT EXISTS 'wait_response';
+ALTER TYPE automation_action_type ADD VALUE IF NOT EXISTS 'internal_note';
+ALTER TYPE automation_action_type ADD VALUE IF NOT EXISTS 'set_variable';
+ALTER TYPE automation_action_type ADD VALUE IF NOT EXISTS 'google_sheets';

@@ -1,0 +1,1182 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ========================================= */
+    /* HUBFIT PRO - PREMIUM LIGHT THEME */
+    /* ========================================= */
+
+    /* Base Colors - Soft Warm Gray */
+    --background: 220 18% 96%;
+    --background-secondary: 220 16% 94%;
+    --foreground: 220 25% 12%;
+
+    /* Cards - Elevated White with subtle warmth */
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 12%;
+    --card-elevated: 0 0% 100%;
+    --card-glass: 0 0% 100% / 0.85;
+
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 12%;
+
+    /* Primary - Intense Red (Hubfit) */
+    --primary: 0 80% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 0 85% 55%;
+
+    /* Secondary - Coral/Pink */
+    --secondary: 15 85% 55%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-glow: 20 90% 60%;
+
+    /* Muted - Warm gray tones */
+    --muted: 220 16% 90%;
+    --muted-foreground: 220 12% 45%;
+
+    /* Accent */
+    --accent: 220 15% 92%;
+    --accent-foreground: 220 25% 12%;
+
+    /* Destructive */
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders & Inputs */
+    --border: 220 14% 88%;
+    --border-glass: 220 25% 12% / 0.08;
+    --input: 220 16% 94%;
+    --ring: 0 80% 50%;
+
+    --radius: 1.25rem;
+
+    /* Glassmorphism (Light) - subtle and elegant */
+    --glass-blur: 25px;
+    --glass-saturation: 140%;
+    --glass-border: 220 25% 12% / 0.08;
+    --glass-highlight: 0 0% 100% / 0.7;
+    --glass-shadow: 220 20% 75%;
+
+    /* Sidebar (Light) - Clean and professional */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 20% 35%;
+    --sidebar-primary: 0 80% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 16% 94%;
+    --sidebar-accent-foreground: 220 25% 12%;
+    --sidebar-border: 220 14% 90%;
+    --sidebar-ring: 0 80% 50%;
+
+    /* Status colors - vivid but balanced */
+    --success: 145 65% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 40 95% 48%;
+    --warning-foreground: 40 100% 10%;
+    --info: 200 85% 45%;
+    --info-foreground: 0 0% 100%;
+
+    /* Chat specific */
+    --chat-bg: 220 18% 96%;
+    --chat-bubble-sent: 0 65% 95%;
+    --chat-bubble-received: 220 16% 94%;
+    --chat-header: 0 0% 100%;
+
+    /* Ticket colors */
+    --ticket-open: 145 65% 36%;
+    --ticket-pending: 40 90% 45%;
+    --ticket-closed: 220 12% 55%;
+
+    /* Module colors */
+    --module-tickets: 0 80% 50%;
+    --module-contacts: 15 85% 55%;
+    --module-campaigns: 350 70% 55%;
+    --module-settings: 220 15% 50%;
+    --module-finance: 40 95% 50%;
+    --module-kanban: 200 85% 50%;
+
+    /* Neumorphism shadows (Light) - soft and natural */
+    --shadow-neumorphic-dark: 220 18% 85%;
+    --shadow-neumorphic-light: 0 0% 100%;
+
+    /* Hubfit Gradients */
+    --gradient-hubfit: linear-gradient(135deg, hsl(0 80% 50%) 0%, hsl(15 85% 55%) 100%);
+  }
+
+  .dark {
+    /* ========================================= */
+    /* HUBFIT PRO - HIGH-END FITNESS DARK THEME */
+    /* ========================================= */
+
+    /* Base Colors - Deep Graphite Black */
+    --background: 220 15% 6%;
+    --background-secondary: 220 14% 8%;
+    --foreground: 0 0% 98%;
+
+    /* Cards - Glassmorphism with depth */
+    --card: 220 15% 9%;
+    --card-foreground: 0 0% 98%;
+    --card-elevated: 220 14% 11%;
+    --card-glass: 220 15% 9% / 0.7;
+
+    /* Popover */
+    --popover: 220 15% 10%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Primary - Intense Red (from Hubfit logo) */
+    --primary: 0 80% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 0 85% 55%;
+
+    /* Secondary - Coral/Pink (from Hubfit gradient) */
+    --secondary: 15 85% 55%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-glow: 20 90% 60%;
+
+    /* Muted - Subtle grays */
+    --muted: 220 12% 14%;
+    --muted-foreground: 220 10% 50%;
+
+    /* Accent */
+    --accent: 220 12% 16%;
+    --accent-foreground: 0 0% 98%;
+
+    /* Destructive */
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders & Inputs */
+    --border: 220 12% 16%;
+    --border-glass: 0 0% 100% / 0.12;
+    --input: 220 14% 12%;
+    --ring: 0 80% 50%;
+
+    --radius: 1.25rem;
+
+    /* Glassmorphism specific - enhanced */
+    --glass-blur: 25px;
+    --glass-saturation: 140%;
+    --glass-border: 0 0% 100% / 0.2;
+    --glass-highlight: 0 0% 100% / 0.08;
+    --glass-shadow: 220 40% 3%;
+
+    /* Sidebar - Hubfit Dark */
+    --sidebar-background: 220 16% 7%;
+    --sidebar-foreground: 0 0% 75%;
+    --sidebar-primary: 0 80% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 12%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 220 12% 12%;
+    --sidebar-ring: 0 80% 50%;
+
+    /* Status colors - vibrant */
+    --success: 145 70% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 40 95% 55%;
+    --warning-foreground: 0 0% 10%;
+    --info: 200 90% 55%;
+    --info-foreground: 0 0% 100%;
+
+    /* Chat specific */
+    --chat-bg: 220 16% 5%;
+    --chat-bubble-sent: 0 60% 20%;
+    --chat-bubble-received: 220 15% 12%;
+    --chat-header: 220 15% 8%;
+
+    /* Ticket colors */
+    --ticket-open: 145 70% 45%;
+    --ticket-pending: 40 93% 50%;
+    --ticket-closed: 220 12% 40%;
+
+    /* Module colors - Red/Coral based */
+    --module-tickets: 0 80% 50%;
+    --module-contacts: 15 85% 55%;
+    --module-campaigns: 350 70% 55%;
+    --module-settings: 220 15% 55%;
+    --module-finance: 40 95% 55%;
+    --module-kanban: 200 90% 55%;
+
+    /* Neumorphism shadows - deeper */
+    --shadow-neumorphic-dark: 220 25% 4%;
+    --shadow-neumorphic-light: 220 15% 18%;
+
+    /* Hubfit Gradients */
+    --gradient-hubfit: linear-gradient(135deg, hsl(0 80% 50%) 0%, hsl(15 85% 55%) 100%);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-size: 13px;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-attachment: fixed;
+  }
+
+  /* Subtle ambient glow - only in dark mode */
+  .dark body {
+    background-image: 
+      radial-gradient(ellipse at 20% 0%, hsl(var(--primary) / 0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, hsl(var(--secondary) / 0.05) 0%, transparent 50%);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', 'Syne', system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  /* Selection - Hubfit Red */
+  ::selection {
+    background: hsl(var(--primary) / 0.4);
+    color: hsl(var(--foreground));
+  }
+}
+
+/* ========================================= */
+/* GLASSMORPHISM COMPONENTS */
+/* ========================================= */
+
+@layer utilities {
+  /* ========================================= */
+  /* HUBFIT GLASSMORPHISM - PREMIUM CARDS */
+  /* ========================================= */
+  
+  /* Glass Card Base - Enhanced frost effect */
+  .glass-card {
+    background: linear-gradient(
+      145deg,
+      hsl(var(--card-glass)) 0%,
+      hsl(var(--card) / 0.4) 100%
+    );
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+    border: 1px solid hsl(var(--glass-border));
+    box-shadow: 
+      0 12px 40px hsl(var(--glass-shadow) / 0.4),
+      inset 0 1px 0 hsl(var(--glass-highlight)),
+      inset 0 -1px 0 hsl(0 0% 0% / 0.05);
+  }
+
+  .glass-card-elevated {
+    background: linear-gradient(
+      145deg,
+      hsl(var(--card-elevated) / 0.85) 0%,
+      hsl(var(--card) / 0.5) 100%
+    );
+    backdrop-filter: blur(30px) saturate(150%);
+    -webkit-backdrop-filter: blur(30px) saturate(150%);
+    border: 1px solid hsl(var(--glass-border));
+    box-shadow: 
+      0 20px 60px hsl(var(--glass-shadow) / 0.5),
+      0 10px 20px hsl(var(--glass-shadow) / 0.35),
+      inset 0 1px 0 hsl(var(--glass-highlight));
+  }
+
+  .glass-card-subtle {
+    background: hsl(var(--card) / 0.35);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.25);
+  }
+
+  /* Glass Card with Red Glow - for active items */
+  .glass-card-active {
+    background: linear-gradient(
+      145deg,
+      hsl(var(--primary) / 0.12) 0%,
+      hsl(var(--primary) / 0.06) 100%
+    );
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsl(var(--primary) / 0.35);
+    box-shadow: 
+      0 0 40px hsl(var(--primary) / 0.2),
+      0 0 80px hsl(var(--primary) / 0.1),
+      inset 0 1px 0 hsl(var(--primary) / 0.15);
+  }
+
+  .glass-card-hover {
+    background: hsl(var(--card) / 0.55);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsl(var(--border) / 0.35);
+  }
+
+  /* Glass Header */
+  .glass-header {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--card) / 0.9) 0%,
+      hsl(var(--card) / 0.7) 100%
+    );
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+  }
+
+  /* Glass Sidebar */
+  .glass-sidebar {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--sidebar-background) / 0.95) 0%,
+      hsl(var(--sidebar-background)) 100%
+    );
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    border-right: 1px solid hsl(var(--glass-border));
+  }
+
+  /* Glass Buttons */
+  .glass-button {
+    background: hsl(var(--card) / 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid hsl(var(--border) / 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .glass-button:hover,
+  .glass-button-hover {
+    background: hsl(var(--card) / 0.7);
+    border-color: hsl(var(--border) / 0.5);
+    box-shadow: 0 4px 12px hsl(var(--glass-shadow) / 0.3);
+  }
+
+  /* Glass Icon Container */
+  .glass-icon {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--muted) / 0.8) 0%,
+      hsl(var(--muted) / 0.5) 100%
+    );
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid hsl(var(--border) / 0.2);
+  }
+
+  .glass-icon-hover {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted) / 0.7) 100%
+    );
+    border-color: hsl(var(--border) / 0.4);
+  }
+
+  /* Glass Input */
+  .glass-input {
+    background: hsl(var(--background) / 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid hsl(var(--border) / 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .glass-input:focus {
+    background: hsl(var(--background) / 0.8);
+    border-color: hsl(var(--primary) / 0.5);
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+  }
+
+  /* ========================================= */
+  /* HUBFIT GRADIENTS - RED TO CORAL */
+  /* ========================================= */
+  
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-glow)) 100%);
+  }
+
+  .gradient-secondary {
+    background: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--secondary-glow)) 100%);
+  }
+
+  /* Hubfit signature gradient - Red to Coral */
+  .gradient-hubfit {
+    background: linear-gradient(135deg, hsl(0 80% 50%) 0%, hsl(15 85% 55%) 50%, hsl(25 90% 58%) 100%);
+  }
+
+  .gradient-coral {
+    background: linear-gradient(135deg, hsl(15 85% 55%) 0%, hsl(25 90% 60%) 100%);
+  }
+
+  .gradient-success {
+    background: linear-gradient(135deg, hsl(145 70% 45%) 0%, hsl(155 75% 50%) 100%);
+  }
+
+  /* Premium mesh background */
+  .gradient-mesh {
+    background: 
+      radial-gradient(ellipse at 15% 20%, hsl(var(--primary) / 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 85% 80%, hsl(var(--secondary) / 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, hsl(350 70% 50% / 0.04) 0%, transparent 60%);
+  }
+
+  /* Text Gradients */
+  .text-gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-glow)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-hubfit {
+    background: linear-gradient(135deg, hsl(0 80% 55%) 0%, hsl(15 85% 60%) 50%, hsl(25 90% 65%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-coral {
+    background: linear-gradient(135deg, hsl(15 85% 55%) 0%, hsl(25 90% 60%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ========================================= */
+  /* HUBFIT GLOW EFFECTS - RED OUTER GLOW */
+  /* ========================================= */
+  
+  .glow-primary {
+    box-shadow: 0 0 40px hsl(var(--primary) / 0.5), 0 0 80px hsl(var(--primary) / 0.25);
+  }
+
+  .glow-secondary {
+    box-shadow: 0 0 40px hsl(var(--secondary) / 0.5), 0 0 80px hsl(var(--secondary) / 0.25);
+  }
+
+  /* Outer glow for active cards */
+  .glow-hubfit-active {
+    box-shadow: 
+      0 0 30px hsl(var(--primary) / 0.35),
+      0 0 60px hsl(var(--primary) / 0.2),
+      0 0 90px hsl(var(--secondary) / 0.1);
+  }
+
+  .shadow-glow-primary {
+    box-shadow: 0 8px 32px hsl(var(--primary) / 0.4);
+  }
+
+  .shadow-glow-secondary {
+    box-shadow: 0 8px 32px hsl(var(--secondary) / 0.4);
+  }
+
+  /* Neumorphic Effects (Legacy Support) */
+  .neu-raised {
+    background: hsl(var(--card));
+    box-shadow: 
+      8px 8px 16px hsl(var(--shadow-neumorphic-dark)),
+      -8px -8px 16px hsl(var(--shadow-neumorphic-light) / 0.05);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .neu-raised-sm {
+    background: hsl(var(--card));
+    box-shadow: 
+      4px 4px 8px hsl(var(--shadow-neumorphic-dark)),
+      -4px -4px 8px hsl(var(--shadow-neumorphic-light) / 0.05);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .neu-pressed {
+    background: hsl(var(--card));
+    box-shadow: 
+      inset 4px 4px 8px hsl(var(--shadow-neumorphic-dark)),
+      inset -4px -4px 8px hsl(var(--shadow-neumorphic-light) / 0.03);
+    border: 1px solid hsl(var(--border) / 0.3);
+  }
+
+  .neu-flat {
+    background: hsl(var(--card));
+    box-shadow: 0 4px 12px hsl(var(--shadow-neumorphic-dark) / 0.5);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .neu-button {
+    background: hsl(var(--card));
+    box-shadow: 
+      6px 6px 12px hsl(var(--shadow-neumorphic-dark)),
+      -6px -6px 12px hsl(var(--shadow-neumorphic-light) / 0.04);
+    border: 1px solid hsl(var(--border) / 0.5);
+    transition: all 0.15s ease;
+  }
+
+  .neu-button:hover {
+    box-shadow: 
+      4px 4px 8px hsl(var(--shadow-neumorphic-dark)),
+      -4px -4px 8px hsl(var(--shadow-neumorphic-light) / 0.04);
+    transform: translateY(1px);
+  }
+
+  .neu-icon {
+    @apply flex items-center justify-center rounded-xl;
+    background: hsl(var(--muted));
+    box-shadow: 
+      inset 2px 2px 4px hsl(var(--shadow-neumorphic-dark) / 0.5),
+      inset -2px -2px 4px hsl(var(--shadow-neumorphic-light) / 0.02);
+  }
+
+  /* Premium Scrollbars */
+  .scrollbar-premium {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+  }
+  
+  .scrollbar-premium::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-premium::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-premium::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+      180deg, 
+      hsl(var(--primary) / 0.3) 0%, 
+      hsl(var(--primary) / 0.15) 100%
+    );
+    border-radius: 3px;
+    transition: background 0.3s ease;
+  }
+  
+  .scrollbar-premium::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+      180deg, 
+      hsl(var(--primary) / 0.5) 0%, 
+      hsl(var(--primary) / 0.3) 100%
+    );
+  }
+
+  .scrollbar-neu {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+  
+  .scrollbar-neu::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .scrollbar-neu::-webkit-scrollbar-track {
+    background: hsl(var(--muted) / 0.3);
+    border-radius: 4px;
+    margin: 4px;
+  }
+  
+  .scrollbar-neu::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, hsl(var(--muted-foreground) / 0.4) 0%, hsl(var(--muted-foreground) / 0.25) 100%);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  
+  .scrollbar-neu::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, hsl(var(--primary) / 0.6) 0%, hsl(var(--primary) / 0.4) 100%);
+  }
+
+  .scrollbar-neu::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.25);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.5);
+  }
+
+  /* Module Card */
+  .module-card {
+    @apply glass-card rounded-2xl p-6 relative overflow-hidden transition-all duration-300;
+  }
+
+  .module-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--module-color, hsl(var(--primary)));
+    opacity: 0.8;
+  }
+
+  .module-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 
+      0 20px 40px hsl(var(--glass-shadow) / 0.4),
+      0 0 0 1px hsl(var(--glass-border));
+  }
+
+  /* Queue Indicator */
+  .queue-indicator {
+    width: 4px;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 4px 0 0 4px;
+  }
+
+  /* ========================================= */
+  /* HUBFIT TYPOGRAPHY & STATS */
+  /* ========================================= */
+  
+  .stat-number {
+    @apply text-4xl font-bold tracking-tight;
+    font-family: 'Syne', 'Space Grotesk', system-ui, sans-serif;
+    background: linear-gradient(180deg, hsl(var(--foreground)) 0%, hsl(var(--muted-foreground)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ========================================= */
+  /* HUBFIT PILL BUTTONS - Fully Rounded */
+  /* ========================================= */
+  
+  .btn-pill {
+    @apply px-6 py-3 rounded-full text-sm font-semibold transition-all duration-300 relative overflow-hidden;
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+    background-size: 200% 200%;
+    background-position: 0% 50%;
+    color: hsl(var(--primary-foreground));
+    border: none;
+    box-shadow: 0 4px 20px hsl(var(--primary) / 0.4);
+  }
+
+  .btn-pill:hover {
+    background-position: 100% 50%;
+    box-shadow: 0 8px 32px hsl(var(--primary) / 0.5);
+    transform: translateY(-2px);
+  }
+
+  .btn-pill:active {
+    transform: translateY(0);
+  }
+
+  /* Animated gradient on hover */
+  .btn-pill-animated {
+    @apply px-6 py-3 rounded-full text-sm font-semibold transition-all duration-300 relative overflow-hidden;
+    background: linear-gradient(45deg, hsl(var(--primary)), hsl(var(--secondary)), hsl(var(--primary)));
+    background-size: 300% 300%;
+    animation: gradient-shift 3s ease infinite paused;
+    color: hsl(var(--primary-foreground));
+    border: none;
+    box-shadow: 0 4px 20px hsl(var(--primary) / 0.4);
+  }
+
+  .btn-pill-animated:hover {
+    animation-play-state: running;
+    box-shadow: 0 8px 32px hsl(var(--primary) / 0.5);
+    transform: translateY(-2px);
+  }
+
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Action Pill - Secondary */
+  .action-pill {
+    @apply px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200;
+    background: hsl(var(--muted) / 0.5);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.3);
+  }
+
+  .action-pill:hover {
+    background: hsl(var(--muted) / 0.7);
+    border-color: hsl(var(--primary) / 0.3);
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.15);
+    transform: translateY(-1px);
+  }
+
+  /* ========================================= */
+  /* HUBFIT ANIMATIONS - STAGGERED ENTRANCE */
+  /* ========================================= */
+  
+  /* Page fade transition */
+  .page-transition {
+    animation: pageFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes pageFadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Staggered entrance - bottom to top */
+  .animate-stagger-in {
+    animation: staggerFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+  }
+
+  @keyframes staggerFadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-up {
+    animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.92);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(28px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Red glow pulse for active elements */
+  .animate-glow-pulse {
+    animation: glowPulseHubfit 2.5s ease-in-out infinite;
+  }
+
+  @keyframes glowPulseHubfit {
+    0%, 100% {
+      box-shadow: 0 0 25px hsl(var(--primary) / 0.35);
+    }
+    50% {
+      box-shadow: 0 0 45px hsl(var(--primary) / 0.55);
+    }
+  }
+
+  /* Stagger Delays - for multiple items */
+  .stagger-1 { animation-delay: 0.06s; }
+  .stagger-2 { animation-delay: 0.12s; }
+  .stagger-3 { animation-delay: 0.18s; }
+  .stagger-4 { animation-delay: 0.24s; }
+  .stagger-5 { animation-delay: 0.30s; }
+  .stagger-6 { animation-delay: 0.36s; }
+  .stagger-7 { animation-delay: 0.42s; }
+  .stagger-8 { animation-delay: 0.48s; }
+}
+
+/* Chat Specific Styles */
+.chat-background {
+  background-color: hsl(var(--chat-bg));
+  background-image: 
+    radial-gradient(circle at 20% 30%, hsl(var(--primary) / 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, hsl(var(--secondary) / 0.04) 0%, transparent 40%),
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.012'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.chat-bubble-sent {
+  background: linear-gradient(135deg, hsl(var(--chat-bubble-sent)) 0%, hsl(12 40% 16%) 100%);
+  box-shadow: 
+    0 2px 12px hsl(var(--glass-shadow) / 0.3),
+    inset 0 1px 0 hsl(0 0% 100% / 0.05);
+}
+
+.chat-bubble-received {
+  background: linear-gradient(135deg, hsl(var(--chat-bubble-received)) 0%, hsl(225 18% 12%) 100%);
+  box-shadow: 
+    0 2px 12px hsl(var(--glass-shadow) / 0.3),
+    inset 0 1px 0 hsl(0 0% 100% / 0.03);
+}
+
+.chat-header-glass {
+  background: hsl(var(--card) / 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid hsl(var(--border) / 0.3);
+}
+
+.chat-input-area {
+  background: linear-gradient(180deg, hsl(var(--card) / 0.95) 0%, hsl(var(--card)) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid hsl(var(--border) / 0.2);
+}
+
+.chat-input-field {
+  background: hsl(var(--background) / 0.7);
+  border: 1px solid hsl(var(--border) / 0.4);
+  transition: all 0.3s ease;
+}
+
+.chat-input-field:focus {
+  background: hsl(var(--background) / 0.9);
+  border-color: hsl(var(--primary) / 0.5);
+  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.1);
+}
+
+.send-button-glow {
+  box-shadow: 0 4px 16px hsl(var(--primary) / 0.4);
+  transition: all 0.2s ease;
+}
+
+.send-button-glow:hover {
+  box-shadow: 0 6px 24px hsl(var(--primary) / 0.5);
+  transform: scale(1.05);
+}
+
+.date-separator {
+  background: linear-gradient(135deg, hsl(var(--card) / 0.8) 0%, hsl(var(--muted) / 0.7) 100%);
+  backdrop-filter: blur(8px);
+  border: 1px solid hsl(var(--border) / 0.2);
+  box-shadow: 0 2px 12px hsl(var(--glass-shadow) / 0.2);
+}
+
+/* Focus Styles */
+@layer components {
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  /* Status Indicators */
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+
+  .status-dot-online {
+    @apply bg-success;
+    box-shadow: 0 0 10px hsl(var(--success) / 0.6);
+  }
+
+  .status-dot-offline {
+    @apply bg-muted-foreground;
+  }
+
+  .status-dot-busy {
+    @apply bg-destructive;
+    box-shadow: 0 0 10px hsl(var(--destructive) / 0.6);
+  }
+
+  /* ========================================= */
+  /* HUBFIT PREMIUM RAIL SIDEBAR */
+  /* ========================================= */
+  .premium-rail-sidebar {
+    /* Premium depth gradient - both modes */
+    background: hsl(var(--sidebar-background));
+    border-right: 1px solid hsl(var(--glass-border));
+    box-shadow: 4px 0 24px -12px hsl(var(--primary) / 0.1);
+
+    /* Performance: contain layout recalculations */
+    contain: layout style;
+  }
+
+  /* Sidebar Rail Transitions - Fast and snappy */
+  .sidebar-rail {
+    width: 68px;
+    transition: width 0.18s ease-out;
+    transform: translateZ(0);
+  }
+
+  .sidebar-rail.sidebar-expanded {
+    width: 248px;
+  }
+
+  /* Sidebar Item - Minimal transitions */
+  .sidebar-item {
+    transition: background-color 0.15s ease;
+  }
+
+  .sidebar-item:active {
+    transform: scale(0.98);
+  }
+
+  /* Label fade - Fast opacity only */
+  .sidebar-label {
+    transition: opacity 0.12s ease-out;
+  }
+
+  /* Hard safety net: if collapsed, never allow labels to overflow */
+  .premium-rail-sidebar[data-expanded="false"] .sidebar-label {
+    max-width: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  .premium-rail-sidebar[data-expanded="true"] .sidebar-label {
+    visibility: visible;
+  }
+
+  /* Logo transition - Simple */
+  .sidebar-logo {
+    transition: all 0.15s ease-out;
+  }
+
+  .sidebar-logo:hover {
+    transform: rotate(3deg) scale(1.02);
+  }
+
+  /* Header content slide - Improved timing */
+  .sidebar-header {
+    transition: 
+      max-height 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.2s ease-out,
+      padding 0.22s ease;
+    will-change: max-height, opacity;
+  }
+
+  /* Section label fade - Better sync */
+  .sidebar-section-label {
+    transition: 
+      opacity 0.18s ease-out,
+      max-height 0.22s ease;
+    will-change: opacity, max-height;
+  }
+
+  /* Upgrade section - Smoother */
+  .sidebar-upgrade {
+    transition: 
+      max-height 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.2s ease-out,
+      padding 0.22s ease;
+    will-change: max-height, opacity;
+  }
+
+  /* Icon container transitions */
+  .sidebar-icon {
+    transition: 
+      background-color 0.2s ease,
+      transform 0.2s ease,
+      box-shadow 0.25s ease;
+  }
+
+  /* Pulsing glow animation - Red glow for Hubfit */
+  @keyframes pulse-glow-hubfit {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: scale(1.4);
+      opacity: 0;
+    }
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow-hubfit 2s ease-in-out infinite;
+    background: hsl(var(--primary));
+  }
+
+  /* Logo glow rotation - Red shadow for Hubfit */
+  @keyframes logo-glow-rotate {
+    0% {
+      transform: rotate(0deg) scale(0.85);
+      box-shadow: 0 0 30px hsl(var(--primary) / 0.3);
+    }
+    25% {
+      box-shadow: 0 0 50px hsl(var(--primary) / 0.5);
+    }
+    50% {
+      transform: rotate(180deg) scale(1.15);
+      box-shadow: 0 0 30px hsl(var(--secondary) / 0.4);
+    }
+    75% {
+      box-shadow: 0 0 50px hsl(var(--secondary) / 0.5);
+    }
+    100% {
+      transform: rotate(360deg) scale(0.85);
+      box-shadow: 0 0 30px hsl(var(--primary) / 0.3);
+    }
+  }
+
+  .sidebar-logo-glow {
+    animation: logo-glow-rotate 6s linear infinite;
+    border-radius: 50%;
+  }
+
+  /* Background glows - Red/Coral themed */
+  @keyframes glow-float-hubfit {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+      opacity: 0.4;
+    }
+    50% {
+      transform: translate(15px, 25px) scale(1.3);
+      opacity: 0.6;
+    }
+  }
+
+  .sidebar-glow-top {
+    animation: glow-float-hubfit 10s ease-in-out infinite;
+    background: hsl(var(--primary) / 0.12) !important;
+  }
+
+  .sidebar-glow-bottom {
+    animation: glow-float-hubfit 12s ease-in-out infinite reverse;
+    background: hsl(var(--secondary) / 0.1) !important;
+  }
+
+  .dark .sidebar-glow-top {
+    background: hsl(var(--primary) / 0.2) !important;
+  }
+
+  .dark .sidebar-glow-bottom {
+    background: hsl(var(--secondary) / 0.18) !important;
+  }
+
+  /* Premium Scrollbar - Red accent */
+  .scrollbar-premium::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .scrollbar-premium::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-premium::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, hsl(var(--primary) / 0.4), hsl(var(--secondary) / 0.2));
+    border-radius: 5px;
+  }
+
+  .scrollbar-premium::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, hsl(var(--primary) / 0.6), hsl(var(--secondary) / 0.4));
+  }
+
+  /* Premium Dropdowns - Deep dark with border */
+  .premium-dropdown {
+    background: hsl(var(--popover)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    box-shadow: 
+      0 12px 40px -8px hsl(var(--glass-shadow) / 0.6),
+      0 0 0 1px hsl(var(--glass-border)) !important;
+    z-index: 9999 !important;
+    backdrop-filter: blur(20px);
+  }
+
+  /* Mode Toggle Premium - Hubfit styled */
+  .mode-toggle-premium {
+    background: linear-gradient(
+      145deg,
+      hsl(var(--muted) / 0.7) 0%,
+      hsl(var(--muted) / 0.4) 100%
+    );
+    border: 1px solid hsl(var(--border) / 0.4);
+    border-radius: 9999px;
+    padding: 4px;
+  }
+
+  .mode-toggle-btn {
+    border-radius: 9999px;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .mode-toggle-btn.active {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+    color: hsl(var(--primary-foreground));
+    box-shadow: 
+      0 4px 20px -4px hsl(var(--primary) / 0.6),
+      0 0 0 1px hsl(var(--primary) / 0.2);
+  }
+
+  .mode-toggle-btn:not(.active) {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .mode-toggle-btn:not(.active):hover {
+    color: hsl(var(--foreground));
+    background: hsl(var(--muted) / 0.6);
+  }
+
+  /* ========================================= */
+  /* HUBFIT AIRY DESIGN - ENHANCED SPACING */
+  /* ========================================= */
+  
+  .airy-card {
+    @apply p-8 rounded-3xl;
+  }
+
+  .airy-section {
+    @apply py-10 px-8;
+  }
+
+  .airy-header {
+    @apply pb-8 mb-8 border-b border-border/30;
+  }
+
+  /* Editorial spacing for premium feel */
+  .editorial-gap {
+    @apply space-y-8;
+  }
+
+  .editorial-gap-lg {
+    @apply space-y-12;
+  }
+}

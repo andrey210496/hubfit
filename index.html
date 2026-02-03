@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+    <script>
+      (function () {
+        try {
+          const saved = localStorage.getItem('theme');
+          const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (saved === 'dark' || (!saved && prefersDark)) document.documentElement.classList.add('dark');
+        } catch (_) {}
+      })();
+    </script>
+
+    <title>HubFit - Gestão Completa para Academias e Boxes</title>
+    <meta name="description" content="HubFit - Tudo em um só lugar. Sistema completo de gestão para academias, boxes de CrossFit e negócios fitness." />
+    <meta name="author" content="HubFit" />
+
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="HubFit" />
+    <meta name="application-name" content="HubFit" />
+    <meta name="msapplication-TileColor" content="#1e3a5f" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="HubFit - Gestão Completa para Academias" />
+    <meta property="og:description" content="Sistema completo de gestão para academias, boxes de CrossFit e negócios fitness. Tudo em um só lugar." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/android-chrome-512x512.png" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@HubFit" />
+    <meta name="twitter:image" content="/android-chrome-512x512.png" />
+
+    <!-- PWA -->
+    <meta name="theme-color" content="#1e3a5f" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

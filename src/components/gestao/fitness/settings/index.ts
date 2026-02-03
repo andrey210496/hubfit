@@ -1,0 +1,1 @@
+export { PaymentMethodsSettings } from './PaymentMethodsSettings';
