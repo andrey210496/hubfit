@@ -120,7 +120,7 @@ export function PremiumSidebar({
 
     if (locked) {
       return (
-        <Tooltip key={item.path} delayDuration={0}>
+        <Tooltip key={item.path} delayDuration={0} open={isExpanded ? false : undefined}>
           <TooltipTrigger asChild>
             <div
               className={cn(
@@ -131,15 +131,14 @@ export function PremiumSidebar({
               <div className="sidebar-icon flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-xl bg-muted/50">
                 <item.icon className="h-5 w-5 text-muted-foreground" />
               </div>
-              <span
-                className={cn(
-                  "sidebar-label flex-1 min-w-0 truncate text-sm text-muted-foreground whitespace-nowrap",
-                  isExpanded ? "opacity-100 max-w-[220px]" : "opacity-0 max-w-0"
-                )}
-                aria-hidden={!isExpanded}
-              >
-                {item.label}
-              </span>
+              {isExpanded && (
+                <span
+                  className="sidebar-label flex-1 min-w-0 truncate text-sm text-muted-foreground whitespace-nowrap"
+                  aria-hidden={false}
+                >
+                  {item.label}
+                </span>
+              )}
             </div>
           </TooltipTrigger>
           <TooltipContent
@@ -156,7 +155,7 @@ export function PremiumSidebar({
     }
 
     return (
-      <Tooltip key={item.path} delayDuration={!isExpanded ? 0 : 1000}>
+      <Tooltip key={item.path} delayDuration={!isExpanded ? 0 : 1000} open={isExpanded ? false : undefined}>
         <TooltipTrigger asChild>
           <button
             ref={(el) => {
@@ -187,30 +186,26 @@ export function PremiumSidebar({
               />
             </div>
 
-            {/* Label */}
-            <div
-              className={cn(
-                "sidebar-label flex-1 min-w-0 overflow-hidden",
-                isExpanded ? "opacity-100 max-w-[220px]" : "opacity-0 max-w-0"
-              )}
-              aria-hidden={!isExpanded}
-            >
-              <div className="flex items-center justify-between gap-2 min-w-0">
-                <span
-                  className={cn(
-                    "text-sm font-semibold whitespace-nowrap truncate tracking-tight",
-                    isActive ? "text-gradient-hubfit" : "text-foreground/90"
-                  )}
-                >
-                  {item.label}
-                </span>
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span className="flex-shrink-0 bg-gradient-to-r from-primary to-secondary text-primary-foreground text-xs px-2.5 py-0.5 rounded-full font-bold shadow-lg shadow-primary/25">
-                    {item.badge}
+            {/* Label - Only render when expanded */}
+            {isExpanded && (
+              <div className="sidebar-label flex-1 min-w-0 overflow-hidden">
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <span
+                    className={cn(
+                      "text-sm font-semibold whitespace-nowrap truncate tracking-tight",
+                      isActive ? "text-gradient-hubfit" : "text-foreground/90"
+                    )}
+                  >
+                    {item.label}
                   </span>
-                )}
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <span className="flex-shrink-0 bg-gradient-to-r from-primary to-secondary text-primary-foreground text-xs px-2.5 py-0.5 rounded-full font-bold shadow-lg shadow-primary/25">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </button>
         </TooltipTrigger>
         {!isExpanded && (
@@ -229,12 +224,9 @@ export function PremiumSidebar({
   const renderedSections = useMemo(() => {
     return sections.map((section, sectionIndex) => (
       <div key={sectionIndex} className="space-y-1">
-        {/* Section Label */}
-        {section.label && (
-          <div className={cn(
-            "sidebar-section-label pt-4 pb-2 px-3 overflow-hidden transition-all duration-200",
-            isExpanded ? "opacity-100 max-h-10" : "opacity-0 max-h-0"
-          )}>
+        {/* Section Label - Only render when expanded */}
+        {section.label && isExpanded && (
+          <div className="sidebar-section-label pt-4 pb-2 px-3">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
               {section.label}
             </span>
@@ -254,7 +246,7 @@ export function PremiumSidebar({
             open={collapsibleStates[`section-${sectionIndex}`]}
             onOpenChange={() => toggleCollapsible(`section-${sectionIndex}`)}
           >
-            <Tooltip delayDuration={!isExpanded ? 0 : 1000}>
+            <Tooltip delayDuration={!isExpanded ? 0 : 1000} open={isExpanded ? false : undefined}>
               <TooltipTrigger asChild>
                 <CollapsibleTrigger asChild>
                   <button
@@ -274,23 +266,19 @@ export function PremiumSidebar({
                     )}>
                       <section.collapsibleIcon className="h-5 w-5" />
                     </div>
-                    <div
-                      className={cn(
-                        "sidebar-label flex-1 min-w-0 overflow-hidden transition-all duration-200",
-                        isExpanded ? "opacity-100 max-w-[220px]" : "opacity-0 max-w-0"
-                      )}
-                      aria-hidden={!isExpanded}
-                    >
-                      <div className="flex items-center justify-between gap-2 min-w-0">
-                        <span className="text-sm font-medium whitespace-nowrap truncate">{section.collapsibleLabel}</span>
-                        <ChevronDown
-                          className={cn(
-                            "h-4 w-4 flex-shrink-0 transition-transform duration-200",
-                            collapsibleStates[`section-${sectionIndex}`] && "rotate-180"
-                          )}
-                        />
+                    {isExpanded && (
+                      <div className="sidebar-label flex-1 min-w-0 overflow-hidden">
+                        <div className="flex items-center justify-between gap-2 min-w-0">
+                          <span className="text-sm font-medium whitespace-nowrap truncate">{section.collapsibleLabel}</span>
+                          <ChevronDown
+                            className={cn(
+                              "h-4 w-4 flex-shrink-0 transition-transform duration-200",
+                              collapsibleStates[`section-${sectionIndex}`] && "rotate-180"
+                            )}
+                          />
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </button>
                 </CollapsibleTrigger>
               </TooltipTrigger>
@@ -321,9 +309,14 @@ export function PremiumSidebar({
       <aside
         data-expanded={isExpanded ? "true" : "false"}
         className={cn(
-          "sidebar-rail h-[100dvh] flex flex-col premium-rail-sidebar absolute top-0 left-0 overflow-hidden will-change-[width]",
+          "sidebar-rail h-[100dvh] flex flex-col premium-rail-sidebar absolute top-0 left-0 will-change-[width]",
           isExpanded ? "sidebar-expanded shadow-2xl" : "sidebar-collapsed"
         )}
+        style={{
+          width: isExpanded ? 248 : 68,
+          overflow: 'hidden',
+          transition: 'width 0.18s ease-out'
+        }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >

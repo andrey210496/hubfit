@@ -62,22 +62,28 @@ export function useCRMDashboardStats() {
       const cold = contacts.filter(c => c.engagement_level === 'cold' || c.engagement_level === 'lukewarm').length;
       const newLeads = contacts.filter(c => c.engagement_level === 'new').length;
 
-      // Conversions - contacts that became members
+      // Conversions - contacts that became ACTIVE members
       const { data: membersData } = await supabase
         .from('members')
-        .select('id, contact_id, created_at')
-        .eq('company_id', companyId);
+        .select('id, contact_id, created_at, status')
+        .eq('company_id', companyId)
+        .eq('status', 'active');
 
       const members = membersData || [];
       const memberContactIds = new Set(members.map(m => m.contact_id));
-      
-      const conversionsThisMonth = members.filter(m => 
+
+      const conversionsThisMonth = members.filter(m =>
         new Date(m.created_at) >= monthStart && new Date(m.created_at) <= monthEnd
       ).length;
 
-      const conversionRate = leadsThisMonth.length > 0 
-        ? Math.round((conversionsThisMonth / leadsThisMonth.length) * 100) 
-        : 0;
+      // Conversion rate - only calculate if there are leads this month
+      // If no leads this month, rate should be 0 (not 100% from division issues)
+      let conversionRate = 0;
+      if (leadsThisMonth.length > 0 && conversionsThisMonth > 0) {
+        conversionRate = Math.round((conversionsThisMonth / leadsThisMonth.length) * 100);
+        // Cap at 100% to avoid showing unrealistic rates
+        conversionRate = Math.min(conversionRate, 100);
+      }
 
       // Engagement stats
       const totalMsgReceived = contacts.reduce((sum, c) => sum + (c.messages_received || 0), 0);
@@ -90,7 +96,7 @@ export function useCRMDashboardStats() {
       for (let i = 6; i >= 0; i--) {
         const day = subDays(today, i);
         const dayStr = format(day, 'yyyy-MM-dd');
-        const dayContacts = contacts.filter(c => 
+        const dayContacts = contacts.filter(c =>
           format(new Date(c.created_at), 'yyyy-MM-dd') === dayStr
         ).length;
         contactsByDay.push({

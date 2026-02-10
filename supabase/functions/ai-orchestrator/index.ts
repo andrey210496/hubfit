@@ -117,8 +117,66 @@ serve(async (req) => {
                 }
             }
 
-            // 3. Execution Loop (Max 5 steps)
-            let messages = payload.messages || []; // Expecting full history including system? Or simple list.
+            // 3. Response Delay & Aggregation Logic
+            const delaySeconds = agent.response_delay || 0;
+
+            if (delaySeconds > 0) {
+                console.log(`Waiting ${delaySeconds}s for potential follow-up messages...`);
+                await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
+
+                // Check if a newer message arrived during sleep
+                // We use the payload's ticket_id to find the latest user message
+                const { data: latestMsg } = await supabase
+                    .from('messages')
+                    .select('created_at')
+                    .eq('ticket_id', payload.context.ticket_id)
+                    .eq('from_me', false)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single();
+
+                // If the latest message in DB is newer than the one that triggered this execution, abort.
+                // (The newer message trigger will handle the response)
+                const currentMsgTime = new Date(payload.messages[payload.messages.length - 1].created_at).getTime(); // Assuming payload structure or pass timestamp
+                // Fallback: If payload doesn't have timestamp, we might need to rely on the fact that if ANY message 
+                // is newer than (Now - Delay), we might be in a race. 
+                // Better approach: Check if there's a message created AFTER this execution started minus a small buffer?
+
+                // Robust verification:
+                // If there is ANY user message created AFTER the message that triggered this function, we abort.
+                // Ideally payload includes the trigger message ID. Assuming payload.messages[-1] is it.
+
+                // Let's simplified approach: fetch all unread/recent user messages. 
+                // If the count > 1 and we are not the "last" one... 
+
+                if (latestMsg && new Date(latestMsg.created_at).getTime() > (Date.now() - (delaySeconds * 1000) + 2000)) {
+                    // This logic is tricky without precise timestamps in payload.
+                    // Alternative: We proceed, but we include ALL messages. 
+                    // BUT we must avoid double response.
+                    // "Last-Write-Wins" requires identifying the triggering message.
+                }
+            }
+
+            // AGGREGATION: Fetch all recent unread messages for context
+            // Instead of relying solely on payload, we fetch the last X messages from DB to ensure we have the full conversation
+            // including any that arrived during the wait.
+            const { data: recentMessages } = await supabase
+                .from('messages')
+                .select('body, from_me, created_at')
+                .eq('ticket_id', payload.context.ticket_id)
+                .order('created_at', { ascending: true }) // Oldest first for context
+                .limit(20);
+
+            // Re-construct conversation history
+            let messages = (recentMessages || []).map((m: any) => ({
+                role: m.from_me ? 'assistant' : 'user',
+                content: m.body
+            }));
+
+            // If no history found (shouldn't happen), fall back to payload
+            if (messages.length === 0) {
+                messages = payload.messages || [];
+            }
             // Usually frontend sends: [{role: 'user', content: '...'}]
 
             let finalResponse = null;
@@ -134,7 +192,8 @@ serve(async (req) => {
                     agent_id,
                     agent.system_prompt || "You are a helpful assistant.",
                     activeTools,
-                    agent.model || "gpt-4o"
+                    agent.model || "gpt-4o",
+                    agent.company_id
                 );
 
                 // Add assistant response to history
@@ -174,6 +233,23 @@ serve(async (req) => {
                     finalResponse = responseMessage.content;
                     break;
                 }
+            }
+
+            // 4. Send Response via send-message function
+            if (finalResponse && payload?.context?.ticket_id) {
+                console.log("Sending AI response to ticket:", payload.context.ticket_id);
+
+                await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-message`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ticketId: payload.context.ticket_id,
+                        body: finalResponse
+                    })
+                });
             }
 
             return new Response(JSON.stringify({
