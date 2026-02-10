@@ -11,8 +11,8 @@ $files = @(
     @("tools\system_retrieval.ts", "$remoteBase/tools/system_retrieval.ts")
 )
 
-# Ensure remote directories exist
-ssh $vpsAddress "mkdir -p $remoteBase/chains $remoteBase/tools"
+Write-Host "Criando diretorios remotos..." -ForegroundColor Yellow
+Start-Process ssh.exe -ArgumentList "$vpsAddress", "'mkdir -p $remoteBase/chains $remoteBase/tools'" -NoNewWindow -Wait
 
 foreach ($file in $files) {
     $localPath = Join-Path $localBase $file[0]
@@ -20,21 +20,19 @@ foreach ($file in $files) {
     
     Write-Host "Enviando $($file[0])..." -ForegroundColor Yellow
     
-    # Check if local file exists
     if (-not (Test-Path $localPath)) {
         Write-Host "Erro: Arquivo local nao encontrado: $localPath" -ForegroundColor Red
         continue
     }
 
-    # Upload
-    scp $localPath "${vpsAddress}:${remotePath}"
-    if (-not $?) {
+    Start-Process scp.exe -ArgumentList "$localPath", "${vpsAddress}:${remotePath}" -NoNewWindow -Wait
+    if ($LASTEXITCODE -ne 0) {
         Write-Host "Erro ao enviar $($file[0])" -ForegroundColor Red
         exit
     }
 }
 
 Write-Host "Reiniciando Edge Functions..." -ForegroundColor Yellow
-ssh $vpsAddress "docker restart supabase-edge-functions-1750867038"
+Start-Process ssh.exe -ArgumentList "$vpsAddress", "'docker restart supabase-edge-functions-1750867038'" -NoNewWindow -Wait
 
 Write-Host "Concluido! Codigo atualizado." -ForegroundColor Cyan
