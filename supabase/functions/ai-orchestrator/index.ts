@@ -7,12 +7,18 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { getCustomerProfile, updateCustomerTags } from "./tools/customer.ts";
 import { getAvailability, bookClass } from "./tools/schedule.ts";
 import { runChatChain } from "./chains/chat_chain.ts";
+import { getSystemModalities, getSystemPlans, getSystemSchedules } from "./tools/system_retrieval.ts";
 
 console.log("AI Orchestrator Function Initialized");
 
 // Tool Definitions Map (Source of Truth for Tool Schemas)
 const TOOL_DEFINITIONS: Record<string, any> = {
-    schedule: {
+    /* 
+    // DISABLED: Replaced by System Data RAG Injection
+    schedule: { ... },
+    booking: { ... },
+    */
+    customer_lookup: {
         type: "function",
         function: {
             name: "check_availability",
@@ -108,13 +114,26 @@ serve(async (req) => {
             // Map DB tools to OpenAI Tool Definitions
             const activeTools = (toolsData || []).map((t: any) => TOOL_DEFINITIONS[t.type]).filter(Boolean);
 
-            // Special case: 'schedule' tool might enable both check_availability and booking?
-            // For MVP, we map 1-to-1 or manual check.
-            // If type is 'schedule', add both check and booking if not present.
-            if (toolsData?.some((t: any) => t.type === 'schedule')) {
-                if (!activeTools.find((t: any) => t.function.name === 'book_class')) {
-                    activeTools.push(TOOL_DEFINITIONS.booking);
-                }
+            // 2.5 RAG: System Data Injection
+            const ragConfig = agent.memory_config?.rag_sources || {};
+            let systemContext = "";
+
+            if (ragConfig.modalities) {
+                const mods = await getSystemModalities(supabase, agent.company_id);
+                systemContext += `\n\n[MODALIDADES DISPONÍVEIS]:\n${mods}`;
+            }
+            if (ragConfig.plans) {
+                const plans = await getSystemPlans(supabase, agent.company_id);
+                systemContext += `\n\n[PLANOS E PREÇOS]:\n${plans}`;
+            }
+            if (ragConfig.schedules) {
+                const scheds = await getSystemSchedules(supabase, agent.company_id);
+                systemContext += `\n\n[QUADRO DE HORÁRIOS]:\n${scheds}`;
+            }
+
+            // Append to System Prompt
+            if (systemContext) {
+                agent.system_prompt += `\n\nIMPORTANT SYSTEM DATA (Use this to answer user questions accurately):\n${systemContext}`;
             }
 
             // 3. Response Delay & Aggregation Logic
@@ -158,17 +177,17 @@ serve(async (req) => {
             }
 
             // AGGREGATION: Fetch all recent unread messages for context
-            // Instead of relying solely on payload, we fetch the last X messages from DB to ensure we have the full conversation
-            // including any that arrived during the wait.
+            // FIX: We must fetch the NEWEST messages (ascending: false) then reverse them.
+            // Previous bug: "ascending: true" + limit(20) was fetching the OLDEST 20 messages forever.
             const { data: recentMessages } = await supabase
                 .from('messages')
                 .select('body, from_me, created_at')
                 .eq('ticket_id', payload.context.ticket_id)
-                .order('created_at', { ascending: true }) // Oldest first for context
+                .order('created_at', { ascending: false }) // Newest first
                 .limit(20);
 
-            // Re-construct conversation history
-            let messages = (recentMessages || []).map((m: any) => ({
+            // Re-construct conversation history (reverse to chronological order)
+            let messages = (recentMessages || []).reverse().map((m: any) => ({
                 role: m.from_me ? 'assistant' : 'user',
                 content: m.body
             }));

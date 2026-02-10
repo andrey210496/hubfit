@@ -7,8 +7,12 @@ $remoteBase = "/root/multiple-supabase/docker/volumes-1750867038/functions/ai-or
 # Files to upload
 $files = @(
     @("index.ts", "$remoteBase/index.ts"),
-    @("chains\chat_chain.ts", "$remoteBase/chains/chat_chain.ts")
+    @("chains\chat_chain.ts", "$remoteBase/chains/chat_chain.ts"),
+    @("tools\system_retrieval.ts", "$remoteBase/tools/system_retrieval.ts")
 )
+
+# Ensure remote directories exist
+ssh $vpsAddress "mkdir -p $remoteBase/chains $remoteBase/tools"
 
 foreach ($file in $files) {
     $localPath = Join-Path $localBase $file[0]

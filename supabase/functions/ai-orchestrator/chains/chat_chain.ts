@@ -94,20 +94,29 @@ export async function runChatChain(
     const lastUserMessage = messages[messages.length - 1];
 
     // Only search memory if it's a user message (not tool output)
+    // Only search memory if it's a user message (not tool output)
+    /* 
+    // TEMPORARY: Disabled to prevent CPU Hard Limit crash.
+    // The previous memory search seems to trigger a timeout even if it returns fast.
     if (lastUserMessage?.role === 'user') {
         try {
             console.log("Searching memory for:", lastUserMessage.content);
+            // Pass apiKey if possible? No, searchMemory reads env.
+            // TODO: Update searchMemory to accept apiKey. For now, it returns empty if no ENV key.
             context = await searchMemory(supabase, lastUserMessage.content, agentId);
+            console.log("Memory search completed. Context length:", context.length);
         } catch (e) {
             console.error("Memory search failed:", e);
         }
     }
+    */
 
     const finalSystemPrompt = context
         ? `${systemPrompt}\n\nCONTEXT FROM KNOWLEDGE BASE:\n${context}`
         : systemPrompt;
 
     try {
+        console.log("Calling OpenAI Completion...");
         const completion = await openai.chat.completions.create({
             model: model,
             messages: [
@@ -117,6 +126,7 @@ export async function runChatChain(
             tools: toolDefinitions.length > 0 ? toolDefinitions : undefined,
             tool_choice: toolDefinitions.length > 0 ? "auto" : undefined
         });
+        console.log("OpenAI Response received. Tokens:", completion.usage?.total_tokens);
 
         return completion.choices[0].message;
     } catch (error: any) {

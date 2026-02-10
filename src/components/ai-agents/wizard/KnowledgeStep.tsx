@@ -1,11 +1,11 @@
-
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Upload, FileText, Trash2, Plus, HelpCircle, X } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Upload, FileText, Trash2, Plus, HelpCircle, X, Database } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface FAQ {
@@ -107,6 +107,68 @@ export function KnowledgeStep({ agent, setAgent }: KnowledgeStepProps) {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
+                        <Database className="h-5 w-5" />
+                        Dados do Sistema (RAG Automático - BETA)
+                    </CardTitle>
+                    <CardDescription>
+                        Selecione quais informações do sistema a IA deve conhecer automaticamente.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-4 border rounded-lg bg-background">
+                        <div className="space-y-0.5">
+                            <Label className="text-base">Modalidades</Label>
+                            <p className="text-sm text-muted-foreground">Injeta lista de aulas e modalidades disponíveis.</p>
+                        </div>
+                        <Switch
+                            checked={agent.memory_config?.rag_sources?.modalities}
+                            onCheckedChange={(checked) => setAgent((prev: any) => ({
+                                ...prev,
+                                memory_config: {
+                                    ...prev.memory_config,
+                                    rag_sources: { ...prev.memory_config?.rag_sources, modalities: checked }
+                                }
+                            }))}
+                        />
+                    </div>
+                    <div className="flex items-center justify-between p-4 border rounded-lg bg-background">
+                        <div className="space-y-0.5">
+                            <Label className="text-base">Planos e Preços</Label>
+                            <p className="text-sm text-muted-foreground">Injeta tabela de planos, valores e condições.</p>
+                        </div>
+                        <Switch
+                            checked={agent.memory_config?.rag_sources?.plans}
+                            onCheckedChange={(checked) => setAgent((prev: any) => ({
+                                ...prev,
+                                memory_config: {
+                                    ...prev.memory_config,
+                                    rag_sources: { ...prev.memory_config?.rag_sources, plans: checked }
+                                }
+                            }))}
+                        />
+                    </div>
+                    <div className="flex items-center justify-between p-4 border rounded-lg bg-background">
+                        <div className="space-y-0.5">
+                            <Label className="text-base">Horários de Aula</Label>
+                            <p className="text-sm text-muted-foreground">Injeta a grade de horários atualizada.</p>
+                        </div>
+                        <Switch
+                            checked={agent.memory_config?.rag_sources?.schedules}
+                            onCheckedChange={(checked) => setAgent((prev: any) => ({
+                                ...prev,
+                                memory_config: {
+                                    ...prev.memory_config,
+                                    rag_sources: { ...prev.memory_config?.rag_sources, schedules: checked }
+                                }
+                            }))}
+                        />
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
                         <HelpCircle className="h-5 w-5" />
                         Perguntas Frequentes (FAQs)
                     </CardTitle>
@@ -170,6 +232,6 @@ export function KnowledgeStep({ agent, setAgent }: KnowledgeStepProps) {
                     )}
                 </CardContent>
             </Card>
-        </div>
+        </div >
     );
 }

@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { 
-  ClipboardList, 
-  Search, 
-  UserPlus, 
-  ArrowLeft, 
-  AlertTriangle, 
+import {
+  ClipboardList,
+  Search,
+  UserPlus,
+  ArrowLeft,
+  AlertTriangle,
   CheckCircle2,
   FileText,
   History,
@@ -75,7 +75,7 @@ const PAR_Q_QUESTIONS = [
 export default function ParQPage() {
   const { profile } = useAuth();
   const companyId = profile?.company_id;
-  
+
   const [step, setStep] = useState<'select' | 'form' | 'history'>('select');
   const [searchTerm, setSearchTerm] = useState('');
   const [members, setMembers] = useState<MemberWithContact[]>([]);
@@ -93,17 +93,9 @@ export default function ParQPage() {
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (companyId && searchTerm.length >= 2) {
-      searchMembers();
-    } else {
-      setMembers([]);
-    }
-  }, [searchTerm, companyId]);
-
-  const searchMembers = async () => {
+  const searchMembers = useCallback(async () => {
     if (!companyId) return;
-    
+
     setLoading(true);
     try {
       const { data: membersData, error } = await supabase
@@ -123,15 +115,22 @@ export default function ParQPage() {
       // Check PAR-Q status for each member
       const membersWithParQ = await Promise.all(
         (membersData || []).map(async (member: any) => {
+          // Fix: member should be typed, but for now we keep 'any' to match existing pattern or cast to unknown
+          // Ideally: (member: MemberWithContact)
+          // But membersData returns raw shape. 
+          // To strictly fix 'no-explicit-any', we can use a more specific type or 'unknown' and assert.
+          // Let's use the local interface partially.
+          const m = member as MemberWithContact;
+
           const { data: parqData } = await supabase
             .from('par_q_responses')
             .select('completed_date')
-            .eq('member_id', member.id)
+            .eq('member_id', m.id)
             .order('completed_date', { ascending: false })
             .limit(1);
 
           return {
-            ...member,
+            ...m,
             parq_completed: parqData && parqData.length > 0,
             last_parq_date: parqData?.[0]?.completed_date || null
           } as MemberWithContact;
@@ -145,7 +144,15 @@ export default function ParQPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId, searchTerm]);
+
+  useEffect(() => {
+    if (companyId && searchTerm.length >= 2) {
+      searchMembers();
+    } else {
+      setMembers([]);
+    }
+  }, [companyId, searchTerm, searchMembers]);
 
   const loadParQHistory = async (memberId: string) => {
     try {
@@ -590,7 +597,7 @@ export default function ParQPage() {
                           <div>
                             <p className="font-semibold text-warning">ATENÇÃO</p>
                             <p className="text-sm text-muted-foreground">
-                              Ao menos uma resposta foi positiva. De acordo com a Lei nº 15681 de 2013, 
+                              Ao menos uma resposta foi positiva. De acordo com a Lei nº 15681 de 2013,
                               o aluno deve consultar um médico antes de iniciar ou alterar o nível de atividade física.
                             </p>
                           </div>
@@ -615,15 +622,15 @@ export default function ParQPage() {
                   <CardContent className="p-4">
                     <h4 className="font-semibold mb-2">Declaração</h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Declaro que estou ciente de que é obrigatório responder ao Questionário de Prontidão 
-                      para Atividade Física, conforme previsto na Lei nº 15681 de 2013, antes de iniciar 
-                      ou aumentar o nível pretendido de atividade física, e que, caso ao menos uma das 
-                      respostas seja positiva, deverei falar com um médico para que esse profissional 
-                      avalie a necessidade de exames médicos para atestar o início ou alteração da 
+                      Declaro que estou ciente de que é obrigatório responder ao Questionário de Prontidão
+                      para Atividade Física, conforme previsto na Lei nº 15681 de 2013, antes de iniciar
+                      ou aumentar o nível pretendido de atividade física, e que, caso ao menos uma das
+                      respostas seja positiva, deverei falar com um médico para que esse profissional
+                      avalie a necessidade de exames médicos para atestar o início ou alteração da
                       referida atividade física.
                     </p>
                     <p className="text-sm text-muted-foreground leading-relaxed mt-2">
-                      Declaro ainda que assumo total responsabilidade por realizar qualquer atividade 
+                      Declaro ainda que assumo total responsabilidade por realizar qualquer atividade
                       física sem cumprir essa recomendação.
                     </p>
                   </CardContent>
