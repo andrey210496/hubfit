@@ -8,33 +8,20 @@ import { OpenAIConfigModal } from "./OpenAIConfigModal";
 import { GeminiConfigModal } from "./GeminiConfigModal";
 import { useLLMConfigurations } from "@/hooks/useLLMConfigurations";
 
+import { OPENAI_MODELS, GEMINI_MODELS } from "@/lib/llm-models";
+
 export function LLMIntegrationsTab() {
   const [openAIModalOpen, setOpenAIModalOpen] = useState(false);
   const [geminiModalOpen, setGeminiModalOpen] = useState(false);
-  
+
   const { configurations, loading, refetch, testConnection, testing } = useLLMConfigurations();
 
   const openaiConfig = configurations.find(c => c.provider === 'openai');
   const geminiConfig = configurations.find(c => c.provider === 'gemini');
 
-  const openaiModels = [
-    "GPT-4o",
-    "GPT-4o-mini",
-    "GPT-4.1",
-    "GPT-4.1-mini",
-    "o1",
-    "o1-mini",
-    "o3-mini",
-    "GPT-4 Turbo"
-  ];
-
-  const geminiModels = [
-    "Gemini 2.5 Pro",
-    "Gemini 2.5 Flash",
-    "Gemini 2.0 Flash",
-    "Gemini 1.5 Pro",
-    "Gemini 1.5 Flash"
-  ];
+  // Map to simple string array for display
+  const openaiModels = OPENAI_MODELS.map(m => m.name);
+  const geminiModels = GEMINI_MODELS.map(m => m.name);
 
   return (
     <div className="space-y-6">

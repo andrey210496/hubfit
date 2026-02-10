@@ -104,10 +104,104 @@ if [ -z "$Network" ]; then
 fi
 
 if [ -z "$Network" ]; then
-   # STANDALONE MODE (Keep existing logic)
+   # STANDALONE MODE
    echo "AVISO: Rede do Traefik nao detectada."
    echo "   -> Rodando em modo Standalone na porta $PORT"
    docker run -d --name $CONTAINER_NAME --restart unless-stopped -p $PORT:80 -v $DEPLOY_DIR:/usr/share/nginx/html -v $DEPLOY_DIR/nginx_spa.conf:/etc/nginx/conf.d/default.conf nginx:alpine
+   
+   # Tentar configurar Nginx do Host para Proxy Reverso (se existir)
+   if command -v nginx &> /dev/null; then
+       echo "   -> Nginx detectado no Host. Verificando conflitos..."
+       
+       # Remove existing configs that might define this domain to avoid "conflicting server name"
+       # This searches strictly for the server_name directive followed by the domain
+       # We ignore the new file we intend to create to avoid deleting it prematurely if it matched
+       TARGET_CONF="/etc/nginx/conf.d/$DOMAIN.conf"
+       
+       grep -r "server_name" /etc/nginx 2>/dev/null | grep "$DOMAIN" | awk -F: '{print $1}' | sort | uniq | while read -r file; do
+           if [ "$file" != "$TARGET_CONF" ] && [ "$file" != "/etc/nginx/sites-available/$DOMAIN" ] && [ "$file" != "/etc/nginx/nginx.conf" ]; then
+               echo "      -> Removendo conflito encontrado em: $file"
+               rm -f "$file"
+               # If it was a symlink in sites-enabled, check if source exists and remove it too
+               if [[ "$file" == *"/etc/nginx/sites-enabled/"* ]]; then
+                   AVAIL_FILE=$(readlink -f "$file")
+                   if [ -f "$AVAIL_FILE" ]; then
+                       echo "      -> Removendo origem do link: $AVAIL_FILE"
+                       rm -f "$AVAIL_FILE"
+                   fi
+               fi
+           fi
+       done
+
+       # Force removal of default if it catches all
+       if [ -f "/etc/nginx/sites-enabled/default" ]; then
+           if grep -q "default_server" "/etc/nginx/sites-enabled/default"; then
+               echo "      -> Desativando site padrao (default) para evitar captura de trafego..."
+               rm -f "/etc/nginx/sites-enabled/default"
+           fi
+       fi
+
+       # Clean up any broken symlinks in sites-enabled
+       echo "      -> Verificando links quebrados em sites-enabled..."
+       for link in /etc/nginx/sites-enabled/*; do
+           if [ -L "$link" ] && [ ! -e "$link" ]; then
+               echo "      -> Removendo link quebrado: $link"
+               rm -f "$link"
+           fi
+       done
+
+       echo "   -> Configurando Proxy Reverso..."
+       NGINX_CONF="$TARGET_CONF"
+       
+       # Se nao usar conf.d, tentar sites-available (Debian/Ubuntu)
+       if [ ! -d "/etc/nginx/conf.d" ] && [ -d "/etc/nginx/sites-available" ]; then
+            NGINX_CONF="/etc/nginx/sites-available/$DOMAIN"
+            USE_SYMLINK=true
+       fi
+
+       cat <<EOF > $NGINX_CONF
+server {
+    listen 80;
+    server_name $DOMAIN;
+
+    location / {
+        proxy_pass http://127.0.0.1:$PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+    }
+}
+EOF
+
+       if [ "$USE_SYMLINK" = true ]; then
+           ln -sf $NGINX_CONF /etc/nginx/sites-enabled/$DOMAIN
+       fi
+
+       echo "   -> Testando e Recarregando Nginx..."
+       nginx -t && nginx -s reload
+       echo "   -> Proxy reverso configurado no host: $DOMAIN -> 127.0.0.1:$PORT"
+
+       # Tentar configurar SSL com Certbot
+       if command -v certbot &> /dev/null; then
+           echo "   -> Certbot detectado. Tentando obter certificado SSL para $DOMAIN..."
+           # --redirect força redirecionamento HTTP -> HTTPS
+           # --register-unsafely-without-email evita prompt interativo
+           # --agree-tos aceita os termos automaticamente
+           certbot --nginx -d $DOMAIN --non-interactive --agree-tos --register-unsafely-without-email --redirect
+           
+           if [ $? -eq 0 ]; then
+               echo "   -> SSL configurado com SUCESSO! O site agora esta seguro (HTTPS)."
+           else
+               echo "   -> AVISO: Falha ao configurar SSL. Verifique os logs do Certbot ou tente manualmente: 'certbot --nginx -d $DOMAIN'"
+           fi
+       else
+           echo "   -> AVISO: Certbot nao encontrado no servidor. O site estara acessivel apenas via HTTP (http://$DOMAIN)."
+           echo "      Recomendacao: Instale o certbot (apt install python3-certbot-nginx) para habilitar HTTPS."
+       fi
+   fi
+
 
 else
     # Check Network Scope

@@ -2,8 +2,7 @@
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import OpenAI from "https://esm.sh/openai@4.24.1";
 
-export async function searchMemory(supabase: SupabaseClient, query: string, agentId: string) {
-    const apiKey = Deno.env.get("OPENAI_API_KEY");
+export async function searchMemory(supabase: SupabaseClient, query: string, agentId: string, apiKey: string) {
     if (!apiKey) return [];
 
     const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });

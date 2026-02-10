@@ -35,30 +35,7 @@ interface OpenAIConfigModalProps {
   onSaved: () => void;
 }
 
-const OPENAI_MODELS = [
-  // GPT-4o Series
-  { id: "gpt-4o", name: "GPT-4o", description: "Modelo flagship, multimodal (texto + imagens)" },
-  { id: "gpt-4o-mini", name: "GPT-4o Mini", description: "Rápido e econômico, ótimo custo-benefício" },
-  { id: "gpt-4o-audio-preview", name: "GPT-4o Audio", description: "Suporte a áudio (preview)" },
-  
-  // GPT-4.1 Series (mais recentes)
-  { id: "gpt-4.1", name: "GPT-4.1", description: "Última geração, melhor raciocínio" },
-  { id: "gpt-4.1-mini", name: "GPT-4.1 Mini", description: "Versão compacta do 4.1" },
-  { id: "gpt-4.1-nano", name: "GPT-4.1 Nano", description: "Ultra rápido e econômico" },
-  
-  // o-Series (Raciocínio)
-  { id: "o1", name: "o1", description: "Raciocínio avançado, ideal para problemas complexos" },
-  { id: "o1-mini", name: "o1-mini", description: "Raciocínio rápido, mais econômico" },
-  { id: "o1-preview", name: "o1-preview", description: "Preview do modelo o1" },
-  { id: "o3-mini", name: "o3-mini", description: "Nova geração de raciocínio (mais recente)" },
-  
-  // GPT-4 Turbo
-  { id: "gpt-4-turbo", name: "GPT-4 Turbo", description: "Alta performance, contexto 128K" },
-  { id: "gpt-4-turbo-preview", name: "GPT-4 Turbo Preview", description: "Versão preview" },
-  
-  // GPT-3.5 (Legado)
-  { id: "gpt-3.5-turbo", name: "GPT-3.5 Turbo", description: "Legado, mais econômico" },
-];
+import { OPENAI_MODELS } from "@/lib/llm-models";
 
 export function OpenAIConfigModal({ open, onOpenChange, existingConfig, onSaved }: OpenAIConfigModalProps) {
   const { profile } = useAuth();

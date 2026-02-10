@@ -32,24 +32,7 @@ interface GeminiConfigModalProps {
   onSaved: () => void;
 }
 
-const GEMINI_MODELS = [
-  // Gemini 2.5 Series (mais recentes)
-  { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", description: "Top da linha, raciocínio + multimodal avançado" },
-  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", description: "Rápido com ótima qualidade (Recomendado)" },
-  { id: "gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite", description: "Ultra rápido e econômico" },
-  
-  // Gemini 2.0 Series
-  { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash", description: "Multimodal rápido" },
-  { id: "gemini-2.0-flash-lite", name: "Gemini 2.0 Flash Lite", description: "Versão lite do 2.0" },
-  
-  // Gemini 1.5 Series
-  { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", description: "Contexto longo (1M tokens)" },
-  { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", description: "Balanceado e eficiente" },
-  { id: "gemini-1.5-flash-8b", name: "Gemini 1.5 Flash 8B", description: "Versão compacta" },
-  
-  // Legado
-  { id: "gemini-1.0-pro", name: "Gemini 1.0 Pro", description: "Legado, estável" },
-];
+import { GEMINI_MODELS } from "@/lib/llm-models";
 
 const SAFETY_LEVELS = [
   { value: "BLOCK_NONE", label: "Bloquear Nenhum", description: "Sem filtro" },

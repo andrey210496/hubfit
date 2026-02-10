@@ -22,10 +22,7 @@ export function KnowledgeStep({ agent, setAgent }: KnowledgeStepProps) {
     const [faqs, setFaqs] = useState<FAQ[]>([]);
     const [newFaq, setNewFaq] = useState({ question: '', answer: '' });
     const [showAddFaq, setShowAddFaq] = useState(false);
-    const [files, setFiles] = useState<{ name: string; size: string }[]>([
-        // Mock for now
-        { name: 'Manual_Vendas_2024.pdf', size: '1.2 MB' }
-    ]);
+    const [files, setFiles] = useState<{ name: string; size: string }[]>([]);
 
     const addFaq = () => {
         if (!newFaq.question.trim() || !newFaq.answer.trim()) {

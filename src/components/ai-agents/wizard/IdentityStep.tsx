@@ -17,20 +17,7 @@ interface LLMConfig {
     is_active: boolean;
 }
 
-const OPENAI_MODELS = [
-    { id: 'gpt-4o', name: 'GPT-4o', description: 'Mais inteligente, multimodal' },
-    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: 'Rápido e econômico' },
-    { id: 'gpt-4.1', name: 'GPT-4.1', description: 'Última geração' },
-    { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', description: 'Compacto e rápido' },
-    { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', description: 'Alta performance' },
-    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Econômico' },
-];
-
-const GEMINI_MODELS = [
-    { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: 'Mais recente e rápido' },
-    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Alta qualidade' },
-    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Rápido e econômico' },
-];
+import { OPENAI_MODELS, GEMINI_MODELS } from '@/lib/llm-models';
 
 export function IdentityStep({ agent, setAgent }: { agent: any, setAgent: any }) {
     const { profile } = useAuth();

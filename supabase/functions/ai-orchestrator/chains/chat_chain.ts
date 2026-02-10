@@ -95,21 +95,17 @@ export async function runChatChain(
 
     // Only search memory if it's a user message (not tool output)
     // Only search memory if it's a user message (not tool output)
-    /* 
-    // TEMPORARY: Disabled to prevent CPU Hard Limit crash.
-    // The previous memory search seems to trigger a timeout even if it returns fast.
+    // Only search memory if it's a user message (not tool output)
     if (lastUserMessage?.role === 'user') {
         try {
             console.log("Searching memory for:", lastUserMessage.content);
-            // Pass apiKey if possible? No, searchMemory reads env.
-            // TODO: Update searchMemory to accept apiKey. For now, it returns empty if no ENV key.
-            context = await searchMemory(supabase, lastUserMessage.content, agentId);
-            console.log("Memory search completed. Context length:", context.length);
+            const searchStart = Date.now();
+            context = await searchMemory(supabase, lastUserMessage.content, agentId, apiKey);
+            console.log(`Memory search completed in ${Date.now() - searchStart}ms. Context length:`, context.length);
         } catch (e) {
             console.error("Memory search failed:", e);
         }
     }
-    */
 
     const finalSystemPrompt = context
         ? `${systemPrompt}\n\nCONTEXT FROM KNOWLEDGE BASE:\n${context}`
