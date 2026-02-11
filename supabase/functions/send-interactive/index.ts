@@ -1,17 +1,9 @@
+// supabase/functions/send-interactive/index.ts (REFATORADO — Multi-Provider)
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-const GLOBAL_COMPANY_ID = '00000000-0000-0000-0000-000000000000';
-
-interface NotificaMeConfig {
-  apiUrl: string;
-  apiKey: string;
-}
+import { corsHeaders } from "../_shared/cors.ts";
+import { sendMessage as sendViaProvider, type WhatsAppConnection } from "../_shared/providers.ts";
 
 interface ButtonMessage {
   type: 'button';
@@ -33,30 +25,6 @@ interface ListMessage {
   }>;
 }
 
-async function getGlobalConfig(supabase: any): Promise<NotificaMeConfig | null> {
-  const { data, error } = await supabase
-    .from('campaign_settings')
-    .select('key, value')
-    .eq('company_id', GLOBAL_COMPANY_ID)
-    .in('key', ['notificame_api_url', 'notificame_api_key']);
-
-  if (error || !data || data.length === 0) return null;
-
-  const settings: Record<string, string> = {};
-  data.forEach((item: any) => {
-    settings[item.key] = item.value || '';
-  });
-
-  if (!settings.notificame_api_url || !settings.notificame_api_key) {
-    return null;
-  }
-
-  return {
-    apiUrl: settings.notificame_api_url.replace(/\/$/, ''),
-    apiKey: settings.notificame_api_key.trim(),
-  };
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -64,140 +32,67 @@ serve(async (req) => {
 
   try {
     console.log('[send-interactive] Starting...');
-    
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Auth
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
+    if (!authHeader) throw new Error('No authorization header');
 
     const { data: { user }, error: authError } = await supabase.auth.getUser(
       authHeader.replace('Bearer ', '')
     );
-
-    if (authError || !user) {
-      throw new Error('Unauthorized');
-    }
+    if (authError || !user) throw new Error('Unauthorized');
 
     const body = await req.json();
-    const { ticketId, interactiveMessage } = body as { 
-      ticketId: string; 
+    const { ticketId, interactiveMessage } = body as {
+      ticketId: string;
       interactiveMessage: ButtonMessage | ListMessage;
     };
-    
-    console.log('[send-interactive] ticketId=', ticketId, 'type=', interactiveMessage?.type);
 
-    if (!ticketId || !interactiveMessage) {
-      throw new Error('Missing required fields: ticketId or interactiveMessage');
-    }
+    if (!ticketId || !interactiveMessage) throw new Error('Missing required fields');
 
-    // Get ticket info
+    // Ticket
     const { data: ticket, error: ticketError } = await supabase
       .from('tickets')
-      .select(`*, contact:contacts(*)`)
+      .select('*, contact:contacts(*)')
       .eq('id', ticketId)
       .single();
 
-    if (ticketError || !ticket) {
-      throw new Error('Ticket not found');
-    }
+    if (ticketError || !ticket) throw new Error('Ticket not found');
 
-    // Get user profile
+    // Permission
     const { data: profile } = await supabase
       .from('profiles')
       .select('*')
       .eq('user_id', user.id)
       .single();
 
-    if (profile?.company_id !== ticket.company_id) {
-      throw new Error('Access denied');
-    }
+    if (profile?.company_id !== ticket.company_id) throw new Error('Access denied');
 
-    // Get global NotificaMe config
-    const globalConfig = await getGlobalConfig(supabase);
-    if (!globalConfig) {
-      throw new Error('WhatsApp não configurado. Contate o administrador.');
-    }
-
-    // Get WhatsApp connection with channel token
+    // WhatsApp connection (with UazAPI fields)
     const { data: whatsapp } = await supabase
       .from('whatsapps')
-      .select('id, instance_id, status')
+      .select('id, company_id, provider, instance_id, status, phone_number_id, access_token, uazapi_url, uazapi_token, uazapi_instance_id')
       .eq('company_id', ticket.company_id)
       .eq('status', 'CONNECTED')
       .order('is_default', { ascending: false })
       .limit(1)
       .single();
 
-    if (!whatsapp?.instance_id) {
-      throw new Error('Nenhuma conexão WhatsApp ativa encontrada');
-    }
+    if (!whatsapp) throw new Error('Nenhuma conexão WhatsApp ativa');
 
     const cleanPhone = ticket.contact.number.replace('@s.whatsapp.net', '').replace('@g.us', '').replace(/\D/g, '');
+    const provider = (whatsapp.provider || '').toLowerCase();
 
-    // Build interactive content for NotificaMe
-    const interactiveContent: any = {
-      type: 'interactive',
-      interactive: {
-        type: interactiveMessage.type,
-        body: { text: interactiveMessage.body },
-        action: {},
-      },
-    };
-
-    if (interactiveMessage.type === 'button') {
-      const buttonMsg = interactiveMessage as ButtonMessage;
-      
-      if (buttonMsg.buttons.length > 3) {
-        throw new Error('Maximum 3 buttons allowed');
-      }
-
-      interactiveContent.interactive.action.buttons = buttonMsg.buttons.map(btn => ({
-        type: 'reply',
-        reply: {
-          id: btn.id,
-          title: btn.title.substring(0, 20),
-        }
-      }));
-
-      if (buttonMsg.header) {
-        interactiveContent.interactive.header = buttonMsg.header;
-      }
-      if (buttonMsg.footer) {
-        interactiveContent.interactive.footer = { text: buttonMsg.footer };
-      }
-    } else if (interactiveMessage.type === 'list') {
-      const listMsg = interactiveMessage as ListMessage;
-
-      interactiveContent.interactive.action.button = listMsg.buttonText.substring(0, 20);
-      interactiveContent.interactive.action.sections = listMsg.sections.map(section => ({
-        title: section.title.substring(0, 24),
-        rows: section.rows.map(row => ({
-          id: row.id,
-          title: row.title.substring(0, 24),
-          description: row.description?.substring(0, 72),
-        }))
-      }));
-
-      if (listMsg.header) {
-        interactiveContent.interactive.header = listMsg.header;
-      }
-      if (listMsg.footer) {
-        interactiveContent.interactive.footer = { text: listMsg.footer };
-      }
-    } else {
-      throw new Error('Invalid interactive message type');
-    }
-
-    // Create message body for storage
-    const messageBodyText = interactiveMessage.type === 'button' 
+    // Build message body for storage
+    const messageBodyText = interactiveMessage.type === 'button'
       ? `[Botões] ${interactiveMessage.body}`
       : `[Lista] ${interactiveMessage.body}`;
 
-    // Create message record first
+    // Save message first
     const { data: message, error: messageError } = await supabase.from('messages').insert({
       ticket_id: ticketId,
       contact_id: ticket.contact.id,
@@ -211,79 +106,118 @@ serve(async (req) => {
       data_json: { interactiveMessage },
     }).select().single();
 
-    if (messageError) {
-      console.error('[send-interactive] Failed to create message:', messageError);
-      throw new Error('Failed to create message');
-    }
+    if (messageError) throw new Error('Failed to create message');
 
-    // Send via NotificaMe Hub
-    const payload = {
-      from: whatsapp.instance_id,
-      to: cleanPhone,
-      contents: [interactiveContent],
-    };
-
-    console.log('[send-interactive] Payload:', JSON.stringify(payload).substring(0, 500));
-
-    const endpoints = [
-      `${globalConfig.apiUrl}/v1/channels/whatsapp/messages`,
-      `${globalConfig.apiUrl}/channels/whatsapp/messages`,
-    ];
-
-    let lastError = '';
     let result: any = null;
+    let lastError = '';
 
-    for (const endpoint of endpoints) {
+    // === META Cloud API: Native interactive messages ===
+    if ((provider === 'coex' || provider === 'cloud_api' || provider === 'meta') && whatsapp.phone_number_id && whatsapp.access_token) {
+      const interactivePayload: any = {
+        messaging_product: 'whatsapp',
+        to: cleanPhone.length <= 11 ? `55${cleanPhone}` : cleanPhone,
+        type: 'interactive',
+        interactive: {
+          type: interactiveMessage.type,
+          body: { text: interactiveMessage.body },
+          action: {},
+        },
+      };
+
+      if (interactiveMessage.type === 'button') {
+        const btnMsg = interactiveMessage as ButtonMessage;
+        if (btnMsg.buttons.length > 3) throw new Error('Maximum 3 buttons allowed');
+
+        interactivePayload.interactive.action.buttons = btnMsg.buttons.map(btn => ({
+          type: 'reply',
+          reply: { id: btn.id, title: btn.title.substring(0, 20) }
+        }));
+        if (btnMsg.header) interactivePayload.interactive.header = btnMsg.header;
+        if (btnMsg.footer) interactivePayload.interactive.footer = { text: btnMsg.footer };
+      } else {
+        const listMsg = interactiveMessage as ListMessage;
+        interactivePayload.interactive.action.button = listMsg.buttonText.substring(0, 20);
+        interactivePayload.interactive.action.sections = listMsg.sections.map(s => ({
+          title: s.title.substring(0, 24),
+          rows: s.rows.map(r => ({
+            id: r.id,
+            title: r.title.substring(0, 24),
+            description: r.description?.substring(0, 72),
+          }))
+        }));
+        if (listMsg.header) interactivePayload.interactive.header = listMsg.header;
+        if (listMsg.footer) interactivePayload.interactive.footer = { text: listMsg.footer };
+      }
+
       try {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'X-Api-Token': globalConfig.apiKey,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
-
+        const response = await fetch(
+          `https://graph.facebook.com/v21.0/${whatsapp.phone_number_id}/messages`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${whatsapp.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(interactivePayload),
+          }
+        );
         const data = await response.json().catch(() => ({}));
-
         if (response.ok) {
-          result = data;
-          break;
+          result = { id: data.messages?.[0]?.id, ...data };
+        } else {
+          lastError = data.error?.message || `HTTP ${response.status}`;
         }
-
-        lastError = data.message || data.error || `HTTP ${response.status}`;
-        console.log(`[send-interactive] Endpoint ${endpoint} failed:`, response.status, data);
       } catch (e) {
-        console.log(`[send-interactive] Endpoint ${endpoint} error:`, e);
         lastError = e instanceof Error ? e.message : 'Network error';
       }
     }
+    // === UazAPI: Send as text with formatted buttons/list ===
+    else if (provider === 'uazapi') {
+      let formattedText = interactiveMessage.body + '\n';
+
+      if (interactiveMessage.type === 'button') {
+        const btnMsg = interactiveMessage as ButtonMessage;
+        formattedText += '\n' + btnMsg.buttons.map((b, i) => `${i + 1}. ${b.title}`).join('\n');
+      } else {
+        const listMsg = interactiveMessage as ListMessage;
+        listMsg.sections.forEach(s => {
+          formattedText += `\n*${s.title}*\n`;
+          formattedText += s.rows.map(r => `• ${r.title}${r.description ? ` — ${r.description}` : ''}`).join('\n');
+        });
+      }
+
+      if (interactiveMessage.footer) formattedText += `\n\n_${interactiveMessage.footer}_`;
+
+      const sendResult = await sendViaProvider(whatsapp as WhatsAppConnection, {
+        to: ticket.contact.number,
+        body: formattedText,
+      });
+
+      if (sendResult.success) {
+        result = { id: sendResult.messageId };
+      } else {
+        lastError = sendResult.error || 'Falha ao enviar via UazAPI';
+      }
+    } else {
+      lastError = 'Nenhum provider configurado';
+    }
 
     if (result) {
-      const messageWid = result.id || result.messageId;
-
       await supabase.from('messages').update({
-        wid: messageWid,
+        wid: result.id || null,
         ack: 1,
         data_json: { ...message.data_json, providerResponse: result },
       }).eq('id', message.id);
 
-      // Update ticket
       await supabase.from('tickets').update({
         last_message: messageBodyText,
         updated_at: new Date().toISOString(),
       }).eq('id', ticketId);
 
-      return new Response(JSON.stringify({ 
-        success: true, 
-        messageId: message.id,
-        wid: messageWid,
-      }), {
+      return new Response(JSON.stringify({ success: true, messageId: message.id, wid: result.id }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } else {
-      console.error('[send-interactive] All endpoints failed:', lastError);
-
       await supabase.from('messages').update({
         ack: -1,
         data_json: { ...message.data_json, error: lastError },
@@ -293,9 +227,9 @@ serve(async (req) => {
     }
   } catch (error) {
     console.error('[send-interactive] Error:', error);
-    return new Response(JSON.stringify({ 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    return new Response(JSON.stringify({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

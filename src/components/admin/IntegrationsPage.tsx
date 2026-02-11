@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Puzzle, MessageCircle, Bot } from "lucide-react";
-import NotificaMeHubConfigPage from "./NotificaMeHubConfigPage";
 import { MetaAppConfigPage } from "./MetaAppConfigPage";
 import { LLMIntegrationsTab } from "./llm/LLMIntegrationsTab";
 
@@ -36,39 +35,11 @@ export default function IntegrationsPage() {
         </TabsList>
 
         <TabsContent value="whatsapp" className="mt-6">
-          <WhatsAppContent />
+          <MetaAppConfigPage />
         </TabsContent>
 
         <TabsContent value="llm" className="mt-6">
           <LLMIntegrationsTab />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
-
-// WhatsApp sub-tabs content
-function WhatsAppContent() {
-  const [whatsappTab, setWhatsappTab] = useState("notificame");
-
-  return (
-    <div className="space-y-4">
-      <Tabs value={whatsappTab} onValueChange={setWhatsappTab} className="w-full">
-        <TabsList className="w-full max-w-md">
-          <TabsTrigger value="notificame" className="flex-1">
-            NotificaMe Hub
-          </TabsTrigger>
-          <TabsTrigger value="meta" className="flex-1">
-            Meta Cloud API
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="notificame" className="mt-4">
-          <NotificaMeHubConfigPage hideHeader />
-        </TabsContent>
-
-        <TabsContent value="meta" className="mt-4">
-          <MetaAppConfigPage hideHeader />
         </TabsContent>
       </Tabs>
     </div>

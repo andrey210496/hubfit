@@ -1,6 +1,6 @@
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import OpenAI from "https://esm.sh/openai@4.24.1";
+// import OpenAI from "https://esm.sh/openai@4.24.1"; // Removed for performance
 import { searchMemory } from "../memory/vector_store.ts";
 
 // Encryption/Decryption Logic (Copied from llm-config to avoid circular deps/complex imports)
@@ -87,7 +87,7 @@ export async function runChatChain(
     // Initialize Client (Generic for now, assuming OpenAI interface for all via libs or just OpenAI)
     // Note: If using Gemini/Anthropic via OpenAI SDK, base URL might need creating.
     // For now, assuming OpenAI model or OpenAI-compatible.
-    const openai = new OpenAI({ apiKey });
+    // const openai = new OpenAI({ apiKey });
 
     // RAG Context
     let context = "";
@@ -113,15 +113,29 @@ export async function runChatChain(
 
     try {
         console.log("Calling OpenAI Completion...");
-        const completion = await openai.chat.completions.create({
-            model: model,
-            messages: [
-                { role: "system", content: finalSystemPrompt },
-                ...messages
-            ],
-            tools: toolDefinitions.length > 0 ? toolDefinitions : undefined,
-            tool_choice: toolDefinitions.length > 0 ? "auto" : undefined
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "system", content: finalSystemPrompt },
+                    ...messages
+                ],
+                tools: toolDefinitions.length > 0 ? toolDefinitions : undefined,
+                tool_choice: toolDefinitions.length > 0 ? "auto" : undefined
+            })
         });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`OpenAI API Error: ${errorText}`);
+        }
+
+        const completion = await response.json();
         console.log("OpenAI Response received. Tokens:", completion.usage?.total_tokens);
 
         return completion.choices[0].message;

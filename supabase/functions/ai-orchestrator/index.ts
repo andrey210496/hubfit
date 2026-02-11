@@ -115,8 +115,10 @@ serve(async (req) => {
 
             if (ragConfig.modalities) {
                 try {
+                    console.time("rag-modalities");
                     const mods = await getSystemModalities(supabase, agent.company_id);
                     systemContext += `\n\n[MODALIDADES DISPONÍVEIS]:\n${mods}`;
+                    console.timeEnd("rag-modalities");
                 } catch (e) {
                     console.error("Error fetching modalities:", e);
                 }
@@ -124,8 +126,10 @@ serve(async (req) => {
 
             if (ragConfig.plans) {
                 try {
+                    console.time("rag-plans");
                     const plans = await getSystemPlans(supabase, agent.company_id);
                     systemContext += `\n\n[PLANOS E PREÇOS]:\n${plans}`;
+                    console.timeEnd("rag-plans");
                 } catch (e) {
                     console.error("Error fetching plans:", e);
                 }
@@ -133,12 +137,30 @@ serve(async (req) => {
 
             if (ragConfig.schedules) {
                 try {
+                    console.time("rag-schedules");
                     const scheds = await getSystemSchedules(supabase, agent.company_id);
                     systemContext += `\n\n[QUADRO DE HORÁRIOS]:\n${scheds}`;
+                    console.timeEnd("rag-schedules");
                 } catch (e) {
                     console.error("Error fetching schedules:", e);
                 }
             }
+
+            // Add Current Time (Essential for schedule accuracy)
+            const now = new Date();
+            const timeString = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+            const weekDays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+            const dayName = weekDays[now.getDay()]; // Note: getDay() is local time of environment? No, need to adjust to TZ.
+            // Better to rely on toLocaleString for day name too?
+            // actually, edge function timezone is UTC.
+            // We need to shift to Sao_Paulo.
+
+            // Re-calc day based on TZ
+            // Using Intl.DateTimeFormat
+            const dayFormatter = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long' });
+            const currentDayName = dayFormatter.format(now);
+
+            systemContext += `\n\n[DATA E HORA ATUAL]:\n${timeString} (${currentDayName})`;
 
             // Append to System Prompt
             if (systemContext) {

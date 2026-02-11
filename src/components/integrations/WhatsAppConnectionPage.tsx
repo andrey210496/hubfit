@@ -49,7 +49,11 @@ export default function WhatsAppConnectionPage() {
   const [channelToken, setChannelToken] = useState("");
   const [creating, setCreating] = useState(false);
   const [connecting, setConnecting] = useState<string | null>(null);
-  const [connectionType, setConnectionType] = useState<"notificame" | "cloud_api" | "manual">("cloud_api");
+  const [connectionType, setConnectionType] = useState<"uazapi" | "cloud_api" | "manual">("cloud_api");
+  // UazAPI fields
+  const [uazapiInstanceName, setUazapiInstanceName] = useState("");
+  const [uazapiQrCode, setUazapiQrCode] = useState<string | null>(null);
+  const [uazapiConnecting, setUazapiConnecting] = useState<string | null>(null);
   const [queueDialogOpen, setQueueDialogOpen] = useState(false);
   const [selectedQueueIds, setSelectedQueueIds] = useState<string[]>([]);
   const [defaultQueueId, setDefaultQueueId] = useState<string | null>(null);
@@ -65,6 +69,7 @@ export default function WhatsAppConnectionPage() {
   const [connectionQueuesMap, setConnectionQueuesMap] = useState<Record<string, { queue_id: string; is_default: boolean }[]>>({});
 
   const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-webhook`;
+  const uazapiWebhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/uazapi-webhook`;
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -189,35 +194,53 @@ export default function WhatsAppConnectionPage() {
       return;
     }
 
-    if (!newConnectionName.trim()) {
-      toast.error("Digite um nome para a conexão");
+    // UazAPI connection — auto-create via API
+    if (connectionType === "uazapi") {
+      if (!uazapiInstanceName.trim()) {
+        toast.error("Digite o nome da instância");
+        return;
+      }
+
+      try {
+        setCreating(true);
+
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/uazapi-create-instance`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session?.access_token}`
+            },
+            body: JSON.stringify({
+              instanceName: uazapiInstanceName.trim(),
+              action: 'create'
+            })
+          }
+        );
+
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Erro ao criar instância');
+
+        toast.success("Instância UazAPI criada com sucesso!");
+        setCreateDialogOpen(false);
+        setNewConnectionName("");
+        setUazapiInstanceName("");
+        loadConnections();
+      } catch (error: any) {
+        console.error("Error creating UazAPI instance:", error);
+        toast.error(error.message || "Erro ao criar instância UazAPI");
+      } finally {
+        setCreating(false);
+      }
       return;
     }
 
-    try {
-      setCreating(true);
-
-      const { error } = await supabase
-        .from("whatsapps")
-        .insert({
-          company_id: profile!.company_id,
-          name: newConnectionName.trim(),
-          status: "DISCONNECTED",
-          provider: "notificame",
-          is_default: connections.length === 0,
-        });
-
-      if (error) throw error;
-
-      toast.success("Conexão criada! Agora vincule o Token do Canal.");
-      setCreateDialogOpen(false);
-      setNewConnectionName("");
-      loadConnections();
-    } catch (error) {
-      console.error("Error creating connection:", error);
-      toast.error("Erro ao criar conexão");
-    } finally {
-      setCreating(false);
+    // Legacy NotificaMe (fallback — should not be reachable)
+    if (!newConnectionName.trim()) {
+      toast.error("Digite um nome para a conexão");
+      return;
     }
   };
 
@@ -502,7 +525,7 @@ export default function WhatsAppConnectionPage() {
   };
 
   const getProviderBadge = (provider: string | null) => {
-    if (provider === 'cloud_api') {
+    if (provider === 'cloud_api' || provider === 'coex' || provider === 'meta') {
       return (
         <Badge variant="outline" className="gap-1 text-xs border-blue-500 text-blue-600">
           <Cloud className="h-3 w-3" />
@@ -510,10 +533,18 @@ export default function WhatsAppConnectionPage() {
         </Badge>
       );
     }
+    if (provider === 'uazapi') {
+      return (
+        <Badge variant="outline" className="gap-1 text-xs border-green-500 text-green-600">
+          <Zap className="h-3 w-3" />
+          UazAPI
+        </Badge>
+      );
+    }
     return (
       <Badge variant="outline" className="gap-1 text-xs">
         <Zap className="h-3 w-3" />
-        NotificaMe
+        {provider || 'Desconhecido'}
       </Badge>
     );
   };
@@ -569,7 +600,7 @@ export default function WhatsAppConnectionPage() {
               </DialogDescription>
             </DialogHeader>
 
-            <Tabs value={connectionType} onValueChange={(v) => setConnectionType(v as "notificame" | "cloud_api" | "manual")}>
+            <Tabs value={connectionType} onValueChange={(v) => setConnectionType(v as "uazapi" | "cloud_api" | "manual")}>
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="cloud_api" className="gap-2">
                   <Cloud className="h-4 w-4" />
@@ -579,9 +610,9 @@ export default function WhatsAppConnectionPage() {
                   <Settings className="h-4 w-4" />
                   Manual
                 </TabsTrigger>
-                <TabsTrigger value="notificame" className="gap-2">
+                <TabsTrigger value="uazapi" className="gap-2">
                   <Zap className="h-4 w-4" />
-                  NotificaMe
+                  UazAPI
                 </TabsTrigger>
               </TabsList>
 
@@ -695,22 +726,28 @@ export default function WhatsAppConnectionPage() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="notificame" className="space-y-4 mt-4">
-                <Alert>
-                  <Key className="h-4 w-4" />
-                  <AlertDescription>
-                    Após criar a conexão, você precisará vincular o Token do Canal.
-                    O token é obtido no painel do provedor NotificaMe.
+              <TabsContent value="uazapi" className="space-y-4 mt-4">
+                <Alert className="border-green-200 bg-green-50">
+                  <Zap className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800">
+                    <strong>UazAPI</strong> - A instância será criada automaticamente no servidor.
+                    Basta informar um nome e clicar em criar.
                   </AlertDescription>
                 </Alert>
-                <div className="space-y-2">
-                  <Label htmlFor="connection-name">Nome da Conexão</Label>
-                  <Input
-                    id="connection-name"
-                    placeholder="Ex: WhatsApp Principal"
-                    value={newConnectionName}
-                    onChange={(e) => setNewConnectionName(e.target.value)}
-                  />
+
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="uazapi-instance">Nome da Instância *</Label>
+                    <Input
+                      id="uazapi-instance"
+                      placeholder="Ex: minha-empresa, atendimento, vendas"
+                      value={uazapiInstanceName}
+                      onChange={(e) => setUazapiInstanceName(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Nome único para identificar esta conexão WhatsApp
+                    </p>
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>
@@ -825,8 +862,8 @@ export default function WhatsAppConnectionPage() {
                     <div
                       key={queue.id}
                       className={`flex items-center justify-between p-2 rounded-md cursor-pointer transition-colors ${selectedQueueIds.includes(queue.id)
-                          ? 'bg-primary/10 border border-primary/30'
-                          : 'hover:bg-muted'
+                        ? 'bg-primary/10 border border-primary/30'
+                        : 'hover:bg-muted'
                         }`}
                       onClick={() => toggleQueueSelection(queue.id)}
                     >
@@ -1023,6 +1060,26 @@ export default function WhatsAppConnectionPage() {
                   </div>
                 )}
 
+                {/* QR Code display for UazAPI */}
+                {connection.provider === 'uazapi' && uazapiConnecting === connection.id && uazapiQrCode && (
+                  <div className="bg-white p-4 rounded-lg border text-center space-y-2">
+                    <p className="text-sm font-medium">Escaneie o QR Code com seu WhatsApp</p>
+                    <img
+                      src={uazapiQrCode.startsWith('data:') ? uazapiQrCode : `data:image/png;base64,${uazapiQrCode}`}
+                      alt="QR Code WhatsApp"
+                      className="mx-auto w-48 h-48"
+                    />
+                    <p className="text-xs text-muted-foreground">Abra o WhatsApp → Menu → Aparelhos conectados → Conectar</p>
+                  </div>
+                )}
+
+                {connection.provider === 'uazapi' && uazapiConnecting === connection.id && !uazapiQrCode && (
+                  <div className="flex items-center justify-center p-4 gap-2">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span className="text-sm">Gerando QR Code...</span>
+                  </div>
+                )}
+
                 <div className="flex flex-wrap gap-2">
                   {/* Queue configuration button */}
                   <Button
@@ -1034,7 +1091,82 @@ export default function WhatsAppConnectionPage() {
                     {connectionQueuesMap[connection.id]?.length > 0 ? "Alterar Filas" : "Definir Filas"}
                   </Button>
 
-                  {connection.status !== "CONNECTED" && connection.provider !== "cloud_api" && (
+                  {/* UazAPI Connect Button */}
+                  {connection.status !== "CONNECTED" && connection.provider === "uazapi" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={uazapiConnecting === connection.id}
+                      onClick={async () => {
+                        try {
+                          setUazapiConnecting(connection.id);
+                          setUazapiQrCode(null);
+                          const { data: { session } } = await supabase.auth.getSession();
+                          const res = await fetch(
+                            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/uazapi-create-instance`,
+                            {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${session?.access_token}`
+                              },
+                              body: JSON.stringify({
+                                action: 'connect',
+                                connectionId: connection.id
+                              })
+                            }
+                          );
+                          const result = await res.json();
+                          if (!res.ok) throw new Error(result.error || 'Erro ao conectar');
+                          if (result.qrcode) {
+                            setUazapiQrCode(result.qrcode);
+                          }
+                          // Poll for status updates
+                          const poll = setInterval(async () => {
+                            const statusRes = await fetch(
+                              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/uazapi-create-instance`,
+                              {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                  'Authorization': `Bearer ${session?.access_token}`
+                                },
+                                body: JSON.stringify({
+                                  action: 'status',
+                                  connectionId: connection.id
+                                })
+                              }
+                            );
+                            const statusData = await statusRes.json();
+                            if (statusData.status === 'CONNECTED') {
+                              clearInterval(poll);
+                              setUazapiQrCode(null);
+                              setUazapiConnecting(null);
+                              toast.success('WhatsApp conectado!');
+                              loadConnections();
+                            } else if (statusData.qrcode) {
+                              setUazapiQrCode(statusData.qrcode);
+                            }
+                          }, 5000);
+                          // Stop polling after 2 minutes
+                          setTimeout(() => clearInterval(poll), 120000);
+                        } catch (error: any) {
+                          console.error('Error connecting UazAPI:', error);
+                          toast.error(error.message || 'Erro ao conectar');
+                          setUazapiConnecting(null);
+                        }
+                      }}
+                    >
+                      {uazapiConnecting === connection.id ? (
+                        <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Conectando...</>
+                      ) : (
+                        <><Wifi className="h-3 w-3 mr-1" />Conectar WhatsApp</>
+                      )}
+                    </Button>
+                  )}
+
+                  {/* Legacy non-UazAPI non-Cloud connect */}
+                  {connection.status !== "CONNECTED" && connection.provider !== "cloud_api" && connection.provider !== "uazapi" && (
                     <Button
                       variant="outline"
                       size="sm"

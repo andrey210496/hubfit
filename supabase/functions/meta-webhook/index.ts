@@ -159,6 +159,15 @@ serve(async (req) => {
                   continue;
                 }
                 contact = newContact;
+
+                // Auto-criar member (pré-cadastro)
+                if (contact) {
+                  await supabase.from('members').insert({
+                    company_id: connection.company_id,
+                    contact_id: contact.id,
+                    status: 'inactive'
+                  }).catch(() => { });
+                }
               }
 
               // Find or create ticket
@@ -198,7 +207,6 @@ serve(async (req) => {
                   .update({
                     last_message: messageBody,
                     last_message_at: new Date().toISOString(),
-                    unread_messages: supabase.rpc('increment_unread', { ticket_id: ticket.id }),
                   })
                   .eq('id', ticket.id);
               }
@@ -234,6 +242,22 @@ serve(async (req) => {
                 console.error('[Meta Webhook] Error creating message:', msgError);
               } else {
                 console.log('[Meta Webhook] Message saved successfully');
+
+                // Trigger AI Agent (fire & forget)
+                if (messageBody && messageBody !== '[Mídia]') {
+                  fetch(`${supabaseUrl}/functions/v1/ai-agent-process`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${supabaseServiceKey}`
+                    },
+                    body: JSON.stringify({
+                      ticketId: ticket.id,
+                      message: messageBody,
+                      companyId: connection.company_id
+                    })
+                  }).catch(err => console.error('[Meta Webhook] AI trigger error:', err));
+                }
               }
             }
           }
