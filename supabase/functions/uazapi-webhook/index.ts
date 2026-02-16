@@ -18,12 +18,32 @@ serve(async (req) => {
         const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
         const supabase = createClient(supabaseUrl, supabaseKey);
 
-        const body = await req.json();
-        console.log('[UazAPI Webhook] Received:', JSON.stringify(body).substring(0, 500));
+        // DEBUG: Log headers
+        console.log('[UazAPI Webhook] Headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
 
-        const event = body.event || body.type;
-        const instanceId = body.instance || body.instanceId;
+        let body = {};
+        let text = '';
+        try {
+            text = await req.text();
+            console.log('[UazAPI Webhook] RAW Text:', text); // Log RAW text
+            if (text && text.trim().startsWith('{')) {
+                body = JSON.parse(text);
+            } else if (text && text.includes('=')) {
+                // Try form parse just in case
+                const params = new URLSearchParams(text);
+                body = Object.fromEntries(params.entries());
+                console.log('[UazAPI Webhook] Parsed as Form:', body);
+            }
+        } catch (e) {
+            console.warn('[UazAPI Webhook] Failed to parse body:', e);
+        }
+        console.log('[UazAPI Webhook] Parsed Body:', JSON.stringify(body).substring(0, 1000));
+
+        const event = body.event || body.type || body.EventType;
+        const instanceId = body.instance || body.instanceId || body.instanceName;
         const data = body.data || body;
+
+        console.log(`[UazAPI Webhook] Processing: Event=${event}, Instance=${instanceId}`);
 
         // ============================================
         // Buscar conexão pela instance_id
@@ -39,17 +59,22 @@ serve(async (req) => {
             .from('whatsapps')
             .select('id, company_id, default_queue_id')
             .or(`uazapi_instance_id.eq.${instanceId},instance_id.eq.${instanceId}`)
-            .eq('provider', 'uazapi')
+            .in('provider', ['uazapi', 'salesflow'])
             .limit(1)
             .single();
 
         if (!whatsapp) {
-            console.warn('[UazAPI Webhook] No connection found for instance:', instanceId);
+            console.warn('[UazAPI Webhook] MATCH FAILURE. No connection found for instance:', instanceId);
+            // Log partial matches to debug
+            const { data: debug } = await supabase.from('whatsapps').select('id, uazapi_instance_id').limit(5);
+            console.log('[UazAPI Webhook] Available instances in DB:', JSON.stringify(debug));
+
             return new Response(JSON.stringify({ error: 'Connection not found' }), {
                 status: 401,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
         }
+        console.log(`[UazAPI Webhook] MATCH SUCCESS. Found connection ID: ${whatsapp.id} for instance: ${instanceId}`);
 
         // ============================================
         // EVENTO: connection (status da conexão)
@@ -72,6 +97,8 @@ serve(async (req) => {
                 .from('whatsapps')
                 .update({ status: mappedStatus, updated_at: new Date().toISOString() })
                 .eq('id', whatsapp.id);
+
+            console.log(`[UazAPI Webhook] STATUS UPDATE: ${status} -> ${mappedStatus} for ID: ${whatsapp.id}`);
 
             return new Response(JSON.stringify({ success: true }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -115,7 +142,7 @@ serve(async (req) => {
         // ============================================
         // EVENTO: message (mensagem recebida)
         // ============================================
-        if (event === 'message' || event === 'messages.upsert') {
+        if (event === 'message' || event === 'messages.upsert' || event === 'messages') {
             const key = data.key || {};
             const remoteJid = key.remoteJid || data.from;
             const fromMe = key.fromMe || false;

@@ -1,39 +1,77 @@
-$migrationFile = "c:\Users\Cross Nutrition Box\Downloads\antigravity-kit\whitelabel-executer\supabase\migrations\fix_agent_tools.sql"
+$vpsAddress = "root@31.220.103.111"
+$remoteBase = "/root/multiple-supabase/docker/volumes-1750867038/functions"
+$localFunctionsRoot = "$PSScriptRoot\supabase\functions"
+$localConfig = "$PSScriptRoot\supabase\config.toml"
 
-if (-not (Test-Path $migrationFile)) {
-    Write-Host "Erro: Arquivo nao encontrado." -ForegroundColor Red
-    exit
+function Invoke-SSH {
+    param($addr, $cmd)
+    Write-Host "  SSH: $cmd" -ForegroundColor Gray
+    $cmd = "export PATH=`$PATH:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin; $cmd"
+    $p = Start-Process ssh.exe -ArgumentList "$addr", "`"$cmd`"" -NoNewWindow -Wait -PassThru
+    return $p.ExitCode
 }
 
-$vpsAddress = Read-Host "Digite o endereco SSH da VPS (ex: root@192.168.1.5)"
-
-# 1. Preparar arquivo local
-$content = Get-Content $migrationFile -Encoding UTF8 -Raw
-# Remove BOM se existir
-if ($content.StartsWith([char]0xFEFF)) { $content = $content.Substring(1) }
-# Salva temporario
-$tempFile = "fix_final.sql"
-Set-Content $tempFile -Value $content -Encoding UTF8 -NoNewline
-
-# 2. Upload para HOST via SCP
-Write-Host "1/3 Enviando arquivo para VPS (Host)..." -ForegroundColor Yellow
-scp $tempFile "${vpsAddress}:/tmp/fix_agent.sql"
-
-if (-not $?) {
-    Write-Host "Erro no SCP." -ForegroundColor Red
-    exit
+function Invoke-SCP {
+    param($src, $dest)
+    Write-Host "  SCP: $src -> $dest" -ForegroundColor Gray
+    $p = Start-Process scp.exe -ArgumentList "`"$src`"", "$dest" -NoNewWindow -Wait -PassThru
+    return $p.ExitCode
 }
 
-# 3. Copiar do HOST para CONTAINER
-Write-Host "2/3 Copiando do Host para o Container..." -ForegroundColor Yellow
-ssh $vpsAddress "docker cp /tmp/fix_agent.sql supabase-db-1750867038:/tmp/fix_agent.sql"
+Write-Host "=== Deploying Backend Fixes (Code + Config) ===" -ForegroundColor Cyan
+Write-Host "Target: $vpsAddress" -ForegroundColor Yellow
 
-# 4. Executar via PSQL -f (Arquivo Local no Container)
-Write-Host "3/3 Executando Migracao Blindada..." -ForegroundColor Yellow
-ssh $vpsAddress "docker exec supabase-db-1750867038 psql -U supabase_admin -d postgres -f /tmp/fix_agent.sql"
+# 1. Deploy Config
+if (Test-Path $localConfig) {
+    Write-Host "`n>> [1/3] Deploying config.toml..." -ForegroundColor Green
+    Invoke-SCP $localConfig "${vpsAddress}:$remoteBase/config.toml"
+}
 
-# Limpeza
-Remove-Item $tempFile -Force
-ssh $vpsAddress "rm /tmp/fix_agent.sql"
+Push-Location "$localFunctionsRoot"
 
-Write-Host "Concluido! Se isso falhar, eu desisto da computacao (brincadeira)." -ForegroundColor Cyan
+# 2. Deploy uazapi-webhook (Code Fix)
+$func = "uazapi-webhook"
+if (Test-Path $func) {
+    Write-Host "`n>> [2/3] Deploying $func code..." -ForegroundColor Green
+    Invoke-SSH $vpsAddress "mkdir -p $remoteBase/$func"
+    # Recursively copy
+    $files = Get-ChildItem -Path $func -Recurse -File
+    foreach ($file in $files) {
+        $relPath = Resolve-Path -Path $file.FullName -Relative
+        if ($relPath.StartsWith(".\")) { $relPath = $relPath.Substring(2) }
+        $remoteRelPath = $relPath.Replace("\", "/")
+        $remotePath = "$remoteBase/$remoteRelPath"
+        $remoteDir = [System.IO.Path]::GetDirectoryName($remotePath).Replace("\", "/")
+        Invoke-SSH $vpsAddress "mkdir -p `"$remoteDir`""
+        Invoke-SCP ".\$relPath" "${vpsAddress}:$remotePath"
+    }
+}
+
+# 3. Deploy uazapi-create-instance (Code Fix)
+$func = "uazapi-create-instance"
+if (Test-Path $func) {
+    Write-Host "`n>> [3/3] Deploying $func code..." -ForegroundColor Green
+    Invoke-SSH $vpsAddress "mkdir -p $remoteBase/$func"
+    $files = Get-ChildItem -Path $func -Recurse -File
+    foreach ($file in $files) {
+        $relPath = Resolve-Path -Path $file.FullName -Relative
+        if ($relPath.StartsWith(".\")) { $relPath = $relPath.Substring(2) }
+        $remoteRelPath = $relPath.Replace("\", "/")
+        $remotePath = "$remoteBase/$remoteRelPath"
+        $remoteDir = [System.IO.Path]::GetDirectoryName($remotePath).Replace("\", "/")
+        Invoke-SSH $vpsAddress "mkdir -p `"$remoteDir`""
+        Invoke-SCP ".\$relPath" "${vpsAddress}:$remotePath"
+    }
+}
+
+Pop-Location
+
+# 4. Restart
+Write-Host "`n=== Restarting Container ===" -ForegroundColor Cyan
+Invoke-SSH $vpsAddress "docker restart supabase-edge-functions-1750867038"
+
+Write-Host "`n=== Checking Logs (Last 20 lines) ===" -ForegroundColor Yellow
+Start-Sleep -Seconds 5
+Invoke-SSH $vpsAddress "docker logs --tail 20 supabase-edge-functions-1750867038"
+
+Write-Host "`nDone. Try connecting again." -ForegroundColor Green

@@ -77,3 +77,9 @@ verify_jwt = false
 
 [functions.ai-orchestrator]
 verify_jwt = true
+
+[functions.uazapi-webhook]
+verify_jwt = false
+
+[functions.uazapi-check-status]
+verify_jwt = true

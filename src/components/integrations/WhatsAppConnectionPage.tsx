@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -11,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Smartphone, Plus, Trash2, Wifi, WifiOff, Info, MessageSquare, LinkIcon, Cloud, Zap, Settings, CheckCircle, Copy, ChevronDown, Webhook, Bot } from "lucide-react";
+import { Loader2, Smartphone, Plus, Trash2, Wifi, WifiOff, Info, MessageSquare, LinkIcon, Cloud, Zap, Settings, CheckCircle, Copy, ChevronDown, Webhook, Bot, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { MetaEmbeddedSignup } from "./MetaEmbeddedSignup";
 import { useQueues } from "@/hooks/useQueues";
@@ -30,6 +31,9 @@ interface WhatsAppConnection {
   created_at: string | null;
   updated_at: string | null;
   default_queue_id: string | null;
+  uazapi_instance_id?: string;
+  uazapi_url?: string;
+  uazapi_token?: string;
   queues?: { queue_id: string; is_default: boolean }[];
 }
 
@@ -231,6 +235,12 @@ export default function WhatsAppConnectionPage() {
         if (!res.ok) throw new Error(result.error || 'Erro ao criar instância');
 
         toast.success("Instância SalesflowAPI criada com sucesso!");
+
+        // Auto-connect to generate QR Code
+        if (result.connection) {
+          await connectSalesflow(result.connection.id);
+        }
+
         setCreateDialogOpen(false);
         setNewConnectionName("");
         setSalesflowInstanceName("");
@@ -297,6 +307,39 @@ export default function WhatsAppConnectionPage() {
     setSelectedConnection(connection);
     setChannelToken(connection.instance_id || "");
     setConnectDialogOpen(true);
+  };
+
+  const connectSalesflow = async (connectionId: string) => {
+    try {
+      setSalesflowConnecting(connectionId);
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/uazapi-create-instance`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`
+          },
+          body: JSON.stringify({
+            action: 'connect',
+            connectionId: connectionId
+          })
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao conectar SalesflowAPI');
+
+      toast.success("Solicitação de conexão enviada!");
+      loadConnections();
+    } catch (error: any) {
+      console.error("Error connecting SalesflowAPI:", error);
+      toast.error(error.message || "Erro ao conectar");
+    } finally {
+      setSalesflowConnecting(null);
+    }
   };
 
   const connectChannel = async () => {
@@ -380,7 +423,7 @@ export default function WhatsAppConnectionPage() {
               connectionId: connection.id
             })
           }
-        ).catch(err => console.error('Error deleting remote instance:', err));
+        );
       } else {
         await disconnectConnection(connection.id);
       }
@@ -816,6 +859,270 @@ export default function WhatsAppConnectionPage() {
         </Dialog>
       </div>
 
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {connections.length === 0 && (
+          <div className="col-span-full flex flex-col items-center justify-center p-8 text-center border-2 border-dashed rounded-lg bg-muted/50">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+              <MessageSquare className="h-10 w-10 text-muted-foreground" />
+            </div>
+            <h3 className="mt-4 text-lg font-semibold">Nenhuma conexão encontrada</h3>
+            <p className="mb-4 mt-2 text-sm text-muted-foreground max-w-sm">
+              Você ainda não conectou nenhum número de WhatsApp. Clique em "Nova Conexão" para começar.
+            </p>
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Criar primeira conexão
+            </Button>
+          </div>
+        )}
+
+        {connections.map((connection) => {
+          const isOfficial = ['cloud_api', 'coex', 'meta'].includes(connection.provider || '');
+          const defaultQueue = connectionQueuesMap[connection.id]?.find(q => q.is_default);
+          const defaultQueueName = defaultQueue ? getQueueName(defaultQueue.queue_id) : 'Nenhuma fila';
+
+          return (
+            <Card key={connection.id} className={`relative overflow-hidden transition-all hover:shadow-md ${connection.is_default ? 'border-primary shadow-sm' : ''} bg-card`}>
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1 w-full">
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-base font-bold truncate leading-none" title={connection.name}>
+                          {connection.name}
+                        </CardTitle>
+                        {connection.is_default && (
+                          <Badge variant="default" className="text-[10px] h-5 px-1.5 bg-orange-500 hover:bg-orange-600 border-none">
+                            Padrão
+                          </Badge>
+                        )}
+                      </div>
+                      {getStatusBadge(connection.status)}
+                    </div>
+
+                    <div className="flex flex-col gap-1 pt-1">
+                      <div className="flex items-center gap-2">
+                        {getProviderBadge(connection.provider)}
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground bg-muted/50 border-border">
+                          Qualidade: {connection.quality_rating || 'UNKNOWN'}
+                        </Badge>
+                        {['uazapi', 'salesflow'].includes(connection.provider || '') && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="ml-2 h-6 text-xs px-2"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const btn = e.currentTarget;
+                              const originalText = btn.innerText;
+                              btn.innerText = 'Checking...';
+                              btn.disabled = true;
+                              try {
+                                const { data, error } = await supabase.functions.invoke('uazapi-check-status', {
+                                  body: { connectionId: connection.id }
+                                });
+                                if (error) throw error;
+                                if (data.status) {
+                                  loadConnections();
+                                  alert(`Status atualizado: ${data.status}`);
+                                } else {
+                                  alert('Status não mudou.');
+                                }
+                              } catch (err: any) {
+                                alert('Erro: ' + err.message);
+                              } finally {
+                                btn.innerText = originalText;
+                                btn.disabled = false;
+                              }
+                            }}
+                          >
+                            <RefreshCw className="h-3 w-3 mr-1" /> Check
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground font-mono">
+                        ID: {connection.phone_number_id || connection.waba_id || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+
+                {/* QR Code Display Logic */}
+                {(connection.status === 'WAITING_QR' || connection.status === 'OPENING' || connection.status === "CONNECTING") && connection.qr_code && (
+                  <div className="flex flex-col items-center justify-center p-4 bg-white rounded-lg border border-border">
+                    <img src={connection.qr_code} alt="QR Code" className="w-40 h-40 object-contain" />
+                    <p className="text-xs text-muted-foreground mt-2 text-center">Escaneie com seu WhatsApp</p>
+                  </div>
+                )}
+
+                {/* Webhook Configuration / Queue Info */}
+                {connection.status === 'CONNECTED' && (
+                  <Collapsible
+                    open={expandedWebhook === connection.id}
+                    onOpenChange={(isOpen) => setExpandedWebhook(isOpen ? connection.id : null)}
+                    className="space-y-2"
+                  >
+                    <div className="flex items-center justify-between text-sm font-medium text-foreground">
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="p-0 h-auto hover:bg-transparent w-full justify-between">
+                          <span className="flex items-center gap-2 text-xs">
+                            <Webhook className="h-3 w-3" /> Configuração do Webhook
+                          </span>
+                          <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform duration-200 ${expandedWebhook === connection.id ? 'rotate-180' : ''}`} />
+                        </Button>
+                      </CollapsibleTrigger>
+                    </div>
+                    <CollapsibleContent>
+                      <div className="p-3 bg-muted/30 rounded-lg border border-border/50 space-y-3">
+                        <div className="space-y-1">
+                          <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Fila Padrão</Label>
+                          <div className="flex items-center gap-2">
+                            <Bot className="h-4 w-4 text-muted-foreground" />
+                            <Badge variant="secondary" className={`text-xs ${defaultQueue ? 'bg-red-500/10 text-red-600 hover:bg-red-500/20 border-red-500/20' : 'bg-muted text-muted-foreground'}`}>
+                              {defaultQueueName || 'Nenhuma fila configurada'} (padrão)
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1 pt-2 border-t border-border/50">
+                          <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Callback URL (Webhook)</Label>
+                          <div className="flex items-center gap-2">
+                            <code className="flex-1 bg-background p-1.5 rounded text-[10px] font-mono border truncate">
+                              {webhookUrl}
+                            </code>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(webhookUrl, 'Webhook URL')}>
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Verify Token</Label>
+                          <div className="flex items-center gap-2">
+                            <code className="flex-1 bg-background p-1.5 rounded text-[10px] font-mono border truncate">
+                              {META_WEBHOOK_VERIFY_TOKEN}
+                            </code>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(META_WEBHOOK_VERIFY_TOKEN, 'Verify Token')}>
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+
+                {/* API Credentials (Salesflow) */}
+                {(connection.provider === 'uazapi' || connection.provider === 'salesflow') && connection.status === 'CONNECTED' && (
+                  <Collapsible className="space-y-2 mt-2">
+                    <div className="flex items-center justify-between text-sm font-medium text-foreground">
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="p-0 h-auto hover:bg-transparent w-full justify-between">
+                          <span className="flex items-center gap-2 text-xs">
+                            <Settings className="h-3 w-3" /> Credenciais da API (Integração)
+                          </span>
+                          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                        </Button>
+                      </CollapsibleTrigger>
+                    </div>
+                    <CollapsibleContent>
+                      <div className="p-3 bg-muted/30 rounded-lg border border-border/50 space-y-3">
+                        <div className="space-y-1">
+                          <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Server URL</Label>
+                          <div className="flex items-center gap-2">
+                            <code className="flex-1 bg-background p-1.5 rounded text-[10px] font-mono border truncate">
+                              {connection.uazapi_url || 'https://salesflow.uazapi.com'}
+                            </code>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(connection.uazapi_url || 'https://salesflow.uazapi.com', 'API URL')}>
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">API Token (Key)</Label>
+                          <div className="flex items-center gap-2">
+                            <code className="flex-1 bg-background p-1.5 rounded text-[10px] font-mono border truncate">
+                              {connection.uazapi_token ? `${connection.uazapi_token.substring(0, 8)}...` : '**********'}
+                            </code>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(connection.uazapi_token || '', 'API Token')}>
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Instance Name</Label>
+                          <div className="flex items-center gap-2">
+                            <code className="flex-1 bg-background p-1.5 rounded text-[10px] font-mono border truncate">
+                              {connection.uazapi_instance_id || connection.name}
+                            </code>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(connection.uazapi_instance_id || connection.name, 'Instance Name')}>
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 pt-2">
+                  {/* Salesflow Connect Button */}
+                  {(connection.provider === 'uazapi' || connection.provider === 'salesflow') && connection.status !== 'CONNECTED' && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="flex-1 h-9 bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
+                      onClick={() => connectSalesflow(connection.id)}
+                      disabled={!!salesflowConnecting}
+                    >
+                      {salesflowConnecting === connection.id ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                          Conectando...
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="h-3.5 w-3.5 mr-2" />
+                          Conectar
+                        </>
+                      )}
+                    </Button>
+                  )}
+
+                  {connection.status === 'CONNECTED' && (
+                    <>
+                      <Button variant="secondary" size="sm" className="flex-1 h-9 bg-zinc-900 text-zinc-100 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200" onClick={() => openQueueDialog(connection)}>
+                        <Bot className="h-3.5 w-3.5 mr-2" />
+                        Alterar Filas
+                      </Button>
+
+                      <Button variant="secondary" size="sm" className="flex-1 h-9 bg-zinc-900 text-zinc-100 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200" onClick={() => disconnectConnection(connection.id)}>
+                        <WifiOff className="h-3.5 w-3.5 mr-2" />
+                        Desconectar
+                      </Button>
+
+                      <Button variant="ghost" size="icon" className="h-9 w-9 text-red-500 hover:text-red-600 hover:bg-red-500/10" onClick={() => deleteConnection(connection)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+
+                  {connection.status !== 'CONNECTED' && (
+                    <Button variant="destructive" size="sm" className="w-full justify-center h-9" onClick={() => deleteConnection(connection)}>
+                      <Trash2 className="h-3.5 w-3.5 mr-2" />
+                      Remover Conexão
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
       {/* Meta Embedded Signup Dialog */}
       <MetaEmbeddedSignup
         open={metaSignupOpen}
@@ -873,6 +1180,67 @@ export default function WhatsAppConnectionPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      {/* Queue Assignment Dialog */}
+      <Dialog open={queueDialogOpen} onOpenChange={setQueueDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gerenciar Filas</DialogTitle>
+            <DialogDescription>
+              Selecione as filas que esta conexão pode atender. A fila padrão receberá novos chats.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {queues.length === 0 ? (
+              <p className="text-sm text-center text-muted-foreground">Nenhuma fila cadastrada no sistema.</p>
+            ) : (
+              <div className="grid gap-3">
+                {queues.map((queue) => (
+                  <div key={queue.id} className="flex items-center space-x-2 p-2 rounded hover:bg-muted/50 border border-transparent hover:border-border">
+                    <Checkbox
+                      id={`queue-${queue.id}`}
+                      checked={selectedQueueIds.includes(queue.id)}
+                      onCheckedChange={() => toggleQueueSelection(queue.id)}
+                    />
+                    <div className="flex-1 grid gap-1.5 leading-none">
+                      <Label
+                        htmlFor={`queue-${queue.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {queue.name}
+                      </Label>
+                    </div>
+                    {selectedQueueIds.includes(queue.id) && (
+                      <Badge
+                        variant={defaultQueueId === queue.id ? "default" : "outline"}
+                        className={`cursor-pointer text-[10px] h-5 ${defaultQueueId === queue.id ? 'bg-red-500 hover:bg-red-600' : 'hover:bg-muted'}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setDefaultQueueId(queue.id);
+                        }}
+                      >
+                        {defaultQueueId === queue.id ? "Padrão" : "Definir Padrão"}
+                      </Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setQueueDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={updateConnectionQueues} disabled={updatingQueue}>
+              {updatingQueue ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                'Salvar Alterações'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div >
   );
 }

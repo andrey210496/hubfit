@@ -201,6 +201,7 @@ export async function sendMessage(
 
     switch (provider) {
         case 'uazapi':
+        case 'salesflow':
             return sendViaUazAPI(connection, params);
 
         case 'coex':
